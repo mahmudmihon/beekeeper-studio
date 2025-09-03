@@ -12,14 +12,15 @@ function daysInFuture(days = 14) {
 
 export function keysToStatus(licenses: LicenseKey[]): LicenseStatus {
     const status = new LicenseStatus();
-    status.condition = []
+    
+    status.edition = "ultimate";
+    status.condition = ["No app version restriction"];
+    
     const currentDate = new Date();
     const currentVersion = platformInfo.parsedAppVersion;
 
     // Do they have a license at all?
     if (licenses.length === 0) {
-      status.edition = "community";
-      status.condition.push("No license found");
       return status;
     }
 

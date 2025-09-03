@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { install, Module } from "vuex";
+import { Module } from "vuex";
 import rawLog from '@bksLogger'
 import { State as RootState } from '../index'
 import { CloudError } from '@/lib/cloud/ClientHelpers';
@@ -55,21 +55,16 @@ export const LicenseModule: Module<State, RootState>  = {
       return state.licenses.length === 0
     },
     isUltimate(state) {
-      if (!state) return false
-      return state.status.isUltimate
+      return true
     },
     isCommunity(state) {
-      if (!state) return true
-      return state.status.isCommunity
+      return false
     },
     isTrial(state) {
-      if (!state) return true
-      return state.status.isTrial
+      return false
     },
     isValidStateExpired(state) {
-      // this means a license with lifetime perms, but is no longer valid for software updates
-      // so the user has to use an older version of the app.
-      return state.status.isValidDateExpired
+      return false
     }
   },
   mutations: {
