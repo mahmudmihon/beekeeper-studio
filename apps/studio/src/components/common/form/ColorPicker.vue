@@ -1,39 +1,57 @@
 <template>
-  <div>
-    <input
-      type="radio"
-      v-for="color in colors"
-      @change="$emit('input', color)"
-      :key="color"
-      :value="color"
-      :checked="color == (value || 'default')"
-      :class="['connection-label', getColorClass(color)]"
-    >
+  <div class="color-picker-container">
+    <span>Label Color</span>
+    <label class="color-picker-label">
+      <input
+        type="color"
+        :value="value || '#FFFFFF'"
+        @input="$emit('input', $event.target.value)"
+        class="color-picker-input"
+      >
+      <div class="color-picker-preview" :style="{ backgroundColor: value || '#FFFFFF' }"></div>
+    </label>
   </div>
 </template>
 
 <script>
   export default {
     props: ['value'],
-    data: function() {
-      return {
-        colors: [
-          'default',
-          'red',
-          'orange',
-          'yellow',
-          'green',
-          'blue',
-          'purple',
-          'pink',
-        ]
-      };
-    },
-    methods: {
-      getColorClass: function(color) {
-        const suffix = color ? color : 'default';
-        return `connection-label-color-${suffix}`;
-      }
-    }
   }
 </script>
+
+<style scoped>
+  .color-picker-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+  }
+
+  .color-picker-label {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+  }
+
+  .color-picker-input {
+    width: 32px;
+    height: 32px;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .color-picker-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 20px;
+    margin-top: 5px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    pointer-events: none;
+  }
+</style>

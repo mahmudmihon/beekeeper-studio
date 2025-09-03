@@ -1,6 +1,6 @@
 <template>
   <div class="sidebar-wrap row">
-    <workspace-sidebar />
+    <!-- <workspace-sidebar /> -->
 
     <!-- QUICK CONNECT -->
     <div class="tab-content flex-col expand">
@@ -240,7 +240,7 @@
 
 <script>
 import _ from 'lodash'
-import WorkspaceSidebar from './WorkspaceSidebar.vue'
+// import WorkspaceSidebar from './WorkspaceSidebar.vue'
 import { mapState, mapGetters, mapActions } from 'vuex'
 import ConnectionListItem from './connection/ConnectionListItem.vue'
 import SidebarLoading from '@/components/common/SidebarLoading.vue'
@@ -260,7 +260,7 @@ export default {
     ErrorAlert,
     SidebarFolder,
     SidebarSortButtons,
-    WorkspaceSidebar
+    // WorkspaceSidebar
   },
   props: ['selectedConfig'],
   data: () => ({

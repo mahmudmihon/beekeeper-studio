@@ -11,7 +11,8 @@
       @click.prevent="click(config)"
       @dblclick.prevent="doubleClick(config)"
     >
-      <span :class="`connection-label connection-label-color-${labelColor}`" />
+      <span v-if="isHexColor" class="connection-label" :style="{ backgroundColor: labelColor }" />
+      <span v-else :class="`connection-label connection-label-color-${labelColor}`" />
       <div class="connection-title flex-col expand">
         <div class="title">
           {{ label }}
@@ -94,6 +95,9 @@ export default {
     ...mapState('data/connections', {'connectionConfigs': 'items'}),
     ...mapState('data/connectionFolders', {'folders': 'items'}),
     ...mapGetters(['isCloud']),
+    isHexColor() {
+      return this.labelColor && this.labelColor.startsWith('#')
+    },
     moveToOptions() {
       return this.folders
         .filter((folder) => folder.id !== this.config.connectionFolderId)
