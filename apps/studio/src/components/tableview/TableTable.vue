@@ -102,6 +102,7 @@
             type="number"
             v-model="page"
           >
+          <span v-if="totalPages" class="pagination-info">&nbsp; / {{ totalPages }}</span>
           <a
             v-if="hasNextPage"
             @click="page = page + 1"
@@ -393,6 +394,7 @@ export default Vue.extend({
       selectedRowPosition: -1,
       selectedRowData: {},
       expandablePaths: [],
+      totalRecords: null,
     };
   },
   computed: {
@@ -438,6 +440,10 @@ export default Vue.extend({
       get() {
         return this.rawPage
       }
+    },
+    totalPages() {
+      if (!this.totalRecords || this.totalRecords <= 0) return null
+      return Math.ceil(this.totalRecords / this.limit)
     },
     error() {
       return this.saveError ? this.saveError : this.queryError
@@ -725,6 +731,8 @@ export default Vue.extend({
       this.handleTabActive()
     }
     this.registerHandlers(this.rootBindings)
+    // Fetch total records for pagination display
+    await this.fetchTotalRecords()
   },
   methods: {
     createColumnFromProps(column) {
@@ -1813,6 +1821,7 @@ export default Vue.extend({
     async jumpToLastPage() {
       try {
         const totalRows = await this.connection.getTableLength(this.table.name, this.table.schema); // -> SELECT (*) FROM table
+        this.totalRecords = totalRows;
 
         const lastPage = Math.ceil(totalRows / this.limit);
 
@@ -1826,6 +1835,14 @@ export default Vue.extend({
       this.rawTableKeys = await this.connection.getTableKeys(this.table.name, this.table.schema);
       const rawPrimaryKeys = await this.connection.getPrimaryKeys(this.table.name, this.table.schema);
       this.primaryKeys = rawPrimaryKeys.map((key) => key.columnName);
+    },
+    async fetchTotalRecords() {
+      try {
+        this.totalRecords = await this.connection.getTableLength(this.table.name, this.table.schema);
+      } catch (error) {
+        console.error("Error fetching total records:", error);
+        this.totalRecords = null;
+      }
     },
     async refreshTable() {
       if (!this.tabulator) return;

@@ -32,6 +32,10 @@ export default Vue.extend({
       return `Approximately ${Number(this.totalRecords).toLocaleString()} Records`
     }
   },
+  mounted() {
+    // Automatically fetch total records when component is mounted
+    this.fetchTotalRecords()
+  },
   methods: {
     async fetchTotalRecords() {
       this.fetchingTotalRecords = true

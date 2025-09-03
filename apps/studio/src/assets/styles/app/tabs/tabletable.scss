@@ -95,4 +95,13 @@
   .statusbar {
     position: relative;
   }
+
+  .tabulator-paginator {
+    .pagination-info {
+      margin: 0 0.5rem;
+      color: $text-lighter;
+      font-size: 0.9em;
+      line-height: 1.5;
+    }
+  }
 }
