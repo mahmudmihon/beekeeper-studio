@@ -17,7 +17,7 @@ interface State {
   secondarySidebarSize: number;
   secondarySidebarOpen: boolean;
   secondaryActiveTabId?: string;
-  globalSidebarActiveItem: "tables" | "history" | "queries";
+  globalSidebarActiveItem: "tables" | "history" | "queries" | "joins";
 }
 
 const PRIMARY_SIDEBAR_OPEN_KEY = 'primarySidebarOpen-v2'
@@ -59,7 +59,7 @@ export const SidebarModule: Module<State, RootState> = {
     primarySidebarSize(state, size: number) {
       state.primarySidebarSize = size
     },
-    globalSidebarActiveItem(state, item: "tables" | "history" | "queries") {
+    globalSidebarActiveItem(state, item: "tables" | "history" | "queries" | "joins") {
       state.globalSidebarActiveItem = item
     },
 
@@ -107,7 +107,7 @@ export const SidebarModule: Module<State, RootState> = {
       context.commit("secondaryActiveTabId", tabId);
     },
 
-    setGlobalSidebarActiveItem(context, item: "tables" | "history" | "queries") {
+    setGlobalSidebarActiveItem(context, item: "tables" | "history" | "queries" | "joins") {
       context.commit("globalSidebarActiveItem", item);
     },
   },

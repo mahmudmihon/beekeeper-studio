@@ -32,7 +32,16 @@ async function completionSource(
     return null
   }
 
-  const start = context.state.doc.line(promptLine + 1).from + promptSymbol.length;
+  // Check if the line number is valid before accessing it
+  const lineNum = promptLine + 1;
+  const totalLines = context.state.doc.lines;
+  
+  if (lineNum > totalLines) {
+    log.warn("Invalid line number in mongo hint:", lineNum, "total lines:", totalLines);
+    return null;
+  }
+  
+  const start = context.state.doc.line(lineNum).from + promptSymbol.length;
   const end = context.state.doc.length;
 
   const cmd = context.state.doc.sliceString(start, end);

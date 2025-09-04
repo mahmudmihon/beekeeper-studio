@@ -96,7 +96,17 @@ function fold(view: EditorView) {
           ? 0
           : findKeyPosition(view.state.doc.toString(), jsonPath);
       if (linePos === -1) return;
-      const line = view.state.doc.line(linePos + 1);
+      
+      // Check if the line number is valid before accessing it
+      const lineNum = linePos + 1;
+      const totalLines = view.state.doc.lines;
+      
+      if (lineNum > totalLines) {
+        log.warn("Invalid line number in persist json fold:", lineNum, "total lines:", totalLines);
+        return;
+      }
+      
+      const line = view.state.doc.line(lineNum);
       const range = foldable(view.state, line.from, line.to);
       return foldEffect.of(range);
     })

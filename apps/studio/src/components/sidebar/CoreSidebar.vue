@@ -37,6 +37,16 @@
       >
         <favorite-list />
       </div>
+
+      <!-- Join Query Builder -->
+      <div
+        class="tab-pane"
+        id="tab-joins"
+        :class="tabClasses('joins')"
+        v-show="activeItem === 'joins'"
+      >
+        <join-query-builder />
+      </div>
     </div>
   </div>
 </template>
@@ -48,6 +58,7 @@
   import FavoriteList from './core/FavoriteList.vue'
   import DatabaseDropdown from './core/DatabaseDropdown.vue'
   import SurrealNamespaceDropdown from './core/SurrealNamespaceDropdown.vue'
+  import JoinQueryBuilder from './core/JoinQueryBuilder.vue'
 
   import { mapState, mapGetters, mapActions } from 'vuex'
   import rawLog from '@bksLogger'
@@ -55,7 +66,7 @@
   const log = rawLog.scope('core-sidebar')
 
   export default {
-    components: { TableList, DatabaseDropdown, HistoryList, FavoriteList, SurrealNamespaceDropdown},
+    components: { TableList, DatabaseDropdown, HistoryList, FavoriteList, SurrealNamespaceDropdown, JoinQueryBuilder },
     data() {
       return {
         tableLoadError: null,

@@ -27,6 +27,15 @@
     >
       <span class="material-icons">history</span>
     </a>
+    <a
+      href=""
+      @click.prevent="$emit('select', 'joins')"
+      class="nav-item selectable"
+      :class="{ active: activeItem === 'joins'}"
+      title="Join Query Builder"
+    >
+      <span class="material-icons">join_inner</span>
+    </a>
     <span class="expand" />
     <!-- <core-account-button v-if="$store.state.workspaceId > 0" /> -->
   </div>

@@ -50,7 +50,7 @@
         :fold-all="foldAll"
         :unfold-all="unfoldAll"
         :value="text"
-        :force-initialize="reinitializeTextEditor + (reinitialize ?? 0)"
+        :force-initialize="reinitializeTextEditor + (typeof reinitialize === 'number' ? reinitialize : 0)"
         :markers="markers"
         :replaceExtensions="replaceExtensions"
         :line-wrapping="wrapText"
@@ -67,11 +67,6 @@
 </template>
 
 <script lang="ts">
-/**
- * hidden:  it's recommended to use `hidden` prop instead of v-show so that
- *          the text editor can be reinitialized.
- * dataId:  use this to update the component with new data.
- */
 import Vue from "vue";
 import TextEditor from "@beekeeperstudio/ui-kit/vue/text-editor"
 import {
@@ -177,7 +172,10 @@ export default Vue.extend({
       if (this.empty) {
         return ""
       }
-      return this.sourceMap.json
+
+      const jsonText = this.sourceMap.json;
+            
+      return jsonText;
     },
     debouncedFilter: {
       get() {
@@ -192,10 +190,14 @@ export default Vue.extend({
       try {
         // run the replacer on the filteredValue
         replacedFilteredValue = JSON.parse(JSON.stringify(this.filteredValue, this.replacer));
-      } catch (error) {
+      } 
+      catch (error) {
         log.warn("Failed to replace filtered value", error);
       }
-      return JsonSourceMap.stringify(replacedFilteredValue, null, 2);
+      
+      const sourceMap = JsonSourceMap.stringify(replacedFilteredValue, null, 2);
+      
+      return sourceMap;
     },
     filteredValue() {
       if (this.empty) {
@@ -235,6 +237,9 @@ export default Vue.extend({
       _.forEach(this.expandablePaths, (expandablePath: ExpandablePath) => {
         try {
           const line = findKeyPosition(this.text, expandablePath.path);
+          if (line === -1 || !this.lines[line]) {
+            return;
+          }
           const { from, to, value } = findValueInfo(this.lines[line]);
           const onClick = () => {
             this.expandPath(expandablePath);
@@ -245,7 +250,8 @@ export default Vue.extend({
             to: { line, ch: to },
             decoration: createExpandableTextDecoration(value, onClick),
           });
-        } catch (e) {
+        } 
+        catch (e) {
           log.warn("Failed to mark expandable path", expandablePath);
           log.warn(e);
         }
@@ -257,6 +263,9 @@ export default Vue.extend({
         }
         try {
           const line = findKeyPosition(this.text, path.split("."));
+          if (line === -1 || !this.lines[line]) {
+            return;
+          }
           const { from, to, value } = findValueInfo(this.lines[line]);
           const onClick = async () => {
             this.restoredTruncatedPaths.push(path)
@@ -267,7 +276,8 @@ export default Vue.extend({
             to: { line, ch: to },
             decoration: createTruncatableTextDecoration(value, onClick),
           });
-        } catch (e) {
+        } 
+        catch (e) {
           log.warn("Failed to mark truncated path", path);
           log.warn(e);
         }
@@ -291,7 +301,6 @@ export default Vue.extend({
         const type = this.signs[key]
         const line = findKeyPosition(this.text, [key]);
         if (line === -1) {
-          log.warn(`Failed to sign key \`${key}\`. \`${key}\` is not found.`)
           return
         }
         lineGutters.push({ line, type });
@@ -306,13 +315,22 @@ export default Vue.extend({
       }
 
       const ranges = []
-
+      const totalLines = this.lines.length
+      
       editablePaths.forEach((path: string) => {
         const pointer = JsonPointer.compile(path.split("."))
         const position = this.sourceMap.pointers[pointer]
 
         if (!position) {
           log.warn(`Unable to find editable path \`${path}\` in value object.`)
+          return
+        }
+
+        // Validate line numbers against the current document
+        const fromLine = position.value.line
+        const toLine = position.valueEnd.line
+                
+        if (fromLine < 0 || toLine < 0 || fromLine >= totalLines || toLine >= totalLines) {
           return
         }
 
@@ -382,12 +400,17 @@ export default Vue.extend({
       this.$emit("bks-filter-change", { filter });
     },
     replaceExtensions(extensions) {
-      return [
+      const finalExtensions = [
         extensions,
         monokai,
         this.persistJsonFold.extensions,
         this.partialReadonly.extensions(this.editableRanges),
-      ]
+      ];
+      
+      log.debug(`Applying extensions to TextEditor:`, finalExtensions.length, 'extensions');
+      log.debug(`Editable ranges count:`, this.editableRanges.length);
+      
+      return finalExtensions;
     },
     handleEditableRangeChange: _.debounce(function (range, value) {
       this.editableRangeErrors = []

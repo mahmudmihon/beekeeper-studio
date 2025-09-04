@@ -1,15 +1,3 @@
-/**
- * Partial Read-Only Extension for CodeMirror 6
- * 
- * Makes the editor mostly read-only except for specific editable ranges.
- * Useful for JSON editors where only certain values should be editable.
- * 
- * Usage:
- * 1. Create instance: const partial = partialReadonly()
- * 2. Add to extensions: partial.extensions(editableRanges)
- * 3. Listen for changes: partial.addListener("change", (range, value) => {...})
- * 4. Update ranges: partial.setEditableRanges(newRanges)
- */
 import {
   EditorState,
   StateEffect,
@@ -116,9 +104,19 @@ const editableRangeDecorations = StateField.define<DecorationSet>({
 
     for (const [rangeId, range] of state.ranges) {
       try {
+        // Check if the line numbers are valid before accessing them
+        const fromLineNum = range.from.line + 1;
+        const toLineNum = range.to.line + 1;
+        const totalLines = tr.state.doc.lines;
+        
+        // Additional validation for negative line numbers and bounds
+        if (range.from.line < 0 || range.to.line < 0 || fromLineNum > totalLines || toLineNum > totalLines) {
+          continue;
+        }
+        
         const from =
-          tr.state.doc.line(range.from.line + 1).from + range.from.ch;
-        const to = tr.state.doc.line(range.to.line + 1).from + range.to.ch;
+          tr.state.doc.line(fromLineNum).from + range.from.ch;
+        const to = tr.state.doc.line(toLineNum).from + range.to.ch;
         const isHighlighted = state.highlightedRangeId === rangeId;
 
         if (from <= to && from >= 0 && to <= tr.state.doc.length) {
@@ -128,7 +126,8 @@ const editableRangeDecorations = StateField.define<DecorationSet>({
             decoration: editableRangeDecoration(rangeId, isHighlighted),
           });
         }
-      } catch (e) {
+      } 
+      catch (e) {
         // Skip invalid ranges
         log.warn(`Invalid editable range: ${rangeId}`, e);
       }
@@ -171,8 +170,17 @@ function isPositionInEditableRange(
 
   for (const [rangeId, range] of partialState.ranges) {
     try {
-      const from = state.doc.line(range.from.line + 1).from + range.from.ch;
-      const to = state.doc.line(range.to.line + 1).from + range.to.ch;
+      // Check if the line numbers are valid before accessing them
+      const fromLineNum = range.from.line + 1;
+      const toLineNum = range.to.line + 1;
+      const totalLines = state.doc.lines;
+      
+      if (fromLineNum > totalLines || toLineNum > totalLines) {
+        continue;
+      }
+      
+      const from = state.doc.line(fromLineNum).from + range.from.ch;
+      const to = state.doc.line(toLineNum).from + range.to.ch;
 
       if (pos >= from && pos <= to) {
         return rangeId;
@@ -221,10 +229,19 @@ const partialReadOnlyFilter = (editInRangeListener: EditInRangeListener) =>
 
       for (const [rangeId, range] of state.ranges) {
         try {
+          // Check if the line numbers are valid before accessing them
+          const fromLineNum = range.from.line + 1;
+          const toLineNum = range.to.line + 1;
+          const totalLines = tr.startState.doc.lines;
+          
+          if (fromLineNum > totalLines || toLineNum > totalLines) {
+            continue;
+          }
+          
           const from =
-            tr.startState.doc.line(range.from.line + 1).from + range.from.ch;
+            tr.startState.doc.line(fromLineNum).from + range.from.ch;
           const to =
-            tr.startState.doc.line(range.to.line + 1).from + range.to.ch;
+            tr.startState.doc.line(toLineNum).from + range.to.ch;
 
           // Check if the entire change is within this editable range
           if (changeStart >= from && changeEnd <= to) {
@@ -262,8 +279,17 @@ const partialReadOnlyFilter = (editInRangeListener: EditInRangeListener) =>
         if (range) {
           // Calculate the range boundaries in the original document (before the change)
           try {
-            const rangeFrom = tr.startState.doc.line(range.from.line + 1).from + range.from.ch;
-            const oldRangeTo = tr.startState.doc.line(range.to.line + 1).from + range.to.ch;
+            // Check if the line numbers are valid before accessing them
+            const fromLineNum = range.from.line + 1;
+            const toLineNum = range.to.line + 1;
+            const totalLines = tr.startState.doc.lines;
+            
+            if (fromLineNum > totalLines || toLineNum > totalLines) {
+              throw new Error('Invalid line number');
+            }
+            
+            const rangeFrom = tr.startState.doc.line(fromLineNum).from + range.from.ch;
+            const oldRangeTo = tr.startState.doc.line(toLineNum).from + range.to.ch;
 
             // Calculate the length change for this specific change
             const lengthDiff = inserted.length - (to - from);
@@ -275,8 +301,17 @@ const partialReadOnlyFilter = (editInRangeListener: EditInRangeListener) =>
           } catch (e) {
             // Fallback: try to get the current range value from the final state
             try {
-              const rangeFrom = tr.state.doc.line(range.from.line + 1).from + range.from.ch;
-              const rangeTo = tr.state.doc.line(range.to.line + 1).from + range.to.ch;
+              // Check if the line numbers are valid before accessing them
+              const fromLineNum = range.from.line + 1;
+              const toLineNum = range.to.line + 1;
+              const totalLines = tr.state.doc.lines;
+              
+              if (fromLineNum > totalLines || toLineNum > totalLines) {
+                throw new Error('Invalid line number');
+              }
+              
+              const rangeFrom = tr.state.doc.line(fromLineNum).from + range.from.ch;
+              const rangeTo = tr.state.doc.line(toLineNum).from + range.to.ch;
               const newValue = tr.state.doc.sliceString(rangeFrom, rangeTo);
               editInRangeListener(range, newValue);
             } catch (e2) {
@@ -298,8 +333,17 @@ function getRangeIdAtPosition(view: EditorView, pos: number): string | null {
 
   for (const [rangeId, range] of state.ranges) {
     try {
-      const from = view.state.doc.line(range.from.line + 1).from + range.from.ch;
-      const to = view.state.doc.line(range.to.line + 1).from + range.to.ch;
+      // Check if the line numbers are valid before accessing them
+      const fromLineNum = range.from.line + 1;
+      const toLineNum = range.to.line + 1;
+      const totalLines = view.state.doc.lines;
+      
+      if (fromLineNum > totalLines || toLineNum > totalLines) {
+        continue;
+      }
+      
+      const from = view.state.doc.line(fromLineNum).from + range.from.ch;
+      const to = view.state.doc.line(toLineNum).from + range.to.ch;
 
       if (pos >= from && pos <= to) {
         return rangeId;
@@ -409,9 +453,18 @@ const updateExtension = EditorView.updateListener.of((update) => {
 
           tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
             try {
+              // Check if the line numbers are valid before accessing them
+              const fromLineNum = initialRange.from.line + 1;
+              const toLineNum = initialRange.to.line + 1;
+              const totalLines = update.startState.doc.lines;
+              
+              if (fromLineNum > totalLines || toLineNum > totalLines) {
+                return; // Skip this change if line numbers are invalid
+              }
+              
               // Calculate range positions in the original document
-              const rangeFromPos = update.startState.doc.line(initialRange.from.line + 1).from + initialRange.from.ch;
-              const rangeToPos = update.startState.doc.line(initialRange.to.line + 1).from + initialRange.to.ch;
+              const rangeFromPos = update.startState.doc.line(fromLineNum).from + initialRange.from.ch;
+              const rangeToPos = update.startState.doc.line(toLineNum).from + initialRange.to.ch;
 
               // Check if this change is within the range
               if (fromA >= rangeFromPos && fromA <= rangeToPos) {
@@ -429,8 +482,16 @@ const updateExtension = EditorView.updateListener.of((update) => {
         // If the range was affected, update its end position
         if (rangeWasAffected && totalLengthChange !== 0) {
           try {
+            // Check if the line number is valid before accessing it
+            const toLineNum = initialRange.to.line + 1;
+            const totalLines = update.startState.doc.lines;
+            
+            if (toLineNum > totalLines) {
+              return; // Skip this update if line number is invalid
+            }
+            
             // Calculate the new end position
-            const originalEndPos = update.startState.doc.line(initialRange.to.line + 1).from + initialRange.to.ch;
+            const originalEndPos = update.startState.doc.line(toLineNum).from + initialRange.to.ch;
             const newEndPos = originalEndPos + totalLengthChange;
 
             // Convert back to line/ch coordinates using the final document
@@ -492,7 +553,19 @@ export function partialReadonly() {
       return;
     }
 
-    view.dispatch({ effects: setEditableRangesEffect.of(ranges) });
+    // Filter out invalid ranges before setting them
+    const validRanges = ranges.filter(range => {
+      const totalLines = view.state.doc.lines;
+      const fromLineNum = range.from.line + 1;
+      const toLineNum = range.to.line + 1;
+      
+      if (range.from.line < 0 || range.to.line < 0 || fromLineNum > totalLines || toLineNum > totalLines) {
+        return false;
+      }
+      return true;
+    });
+
+    view.dispatch({ effects: setEditableRangesEffect.of(validRanges) });
   }
 
   function addListener(_type: "change", listener: EditInRangeListener) {
