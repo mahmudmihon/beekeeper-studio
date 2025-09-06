@@ -602,9 +602,37 @@ export abstract class BasicDatabaseClient<RawResultType extends BaseQueryResult>
 
     if (filter.type == 'is') {
       queryBuilder = this.knex.whereNull(filter.field);
-    } else if (filter.type == 'is not') {
+    } 
+    else if (filter.type == 'is not') {
       queryBuilder = this.knex.whereNotNull(filter.field);
-    } else {
+    } 
+    else if (filter.type === 'in') {
+      queryBuilder = this.knex.whereIn(filter.field, Array.isArray(filter.value) ? filter.value : [filter.value]);
+    } 
+    else if (filter.type === 'not in') {
+      queryBuilder = this.knex.whereNotIn(filter.field, Array.isArray(filter.value) ? filter.value : [filter.value]);
+    } 
+    else if (filter.type === 'between') {
+      const values = Array.isArray(filter.value) ? filter.value : [filter.value];
+
+      if (values.length === 2) {
+        queryBuilder = this.knex.whereBetween(filter.field, [values[0], values[1]]);
+      } 
+      else {
+        queryBuilder = this.knex.where(filter.field, filter.type, filter.value);
+      }
+    } 
+    else if (filter.type === 'not between') {
+      const values = Array.isArray(filter.value) ? filter.value : [filter.value];
+
+      if (values.length === 2) {
+        queryBuilder = this.knex.whereNotBetween(filter.field, [values[0], values[1]]);
+      } 
+      else {
+        queryBuilder = this.knex.where(filter.field, filter.type, filter.value);
+      }
+    } 
+    else {
       queryBuilder = this.knex.where(filter.field, filter.type, filter.value);
     }
 
@@ -612,5 +640,4 @@ export abstract class BasicDatabaseClient<RawResultType extends BaseQueryResult>
       .split("where")[1]
       .trim();
   }
-
 }

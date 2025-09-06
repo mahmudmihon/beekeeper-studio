@@ -88,7 +88,7 @@ export function menuItems(actionHandler: IMenuActionHandler, settings: IGroupedU
     // help
     about: {
       id: 'about',
-      label: 'About Beekeeper Studio',
+      label: 'About Query Sharp',
       click: actionHandler.about
     },
     devtools: {

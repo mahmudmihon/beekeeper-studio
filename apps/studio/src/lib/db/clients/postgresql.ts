@@ -922,6 +922,7 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
     }
 
     const schemaFilter = buildSchemaFilter(filter, 'schemaname')
+
     const sql = `
       SELECT
         schemaname as schema,
@@ -930,11 +931,11 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
         ${schemaFilter ? `WHERE ${schemaFilter}` : ''}
       order by schemaname, matviewname;
     `
-
     try {
       const data = await this.driverExecuteSingle(sql);
       return data.rows;
-    } catch (error) {
+    } 
+    catch (error) {
       log.warn("Unable to fetch materialized views", error)
       return []
     }
@@ -973,7 +974,7 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
   async getTableLength(table: string, schema: string = this._defaultSchema): Promise<number> {
     const tableType = await this.getEntityType(table, schema)
     const forceSlow = !tableType || tableType !== 'BASE_TABLE'
-    const { countQuery, params } = this.buildSelectTopQueries({ table, schema, filters: undefined, version: this.version, forceSlow })
+    const { countQuery, params } = await this.buildSelectTopQueries({ table, schema, filters: undefined, version: this.version, forceSlow })
     const countResults = await this.driverExecuteSingle(countQuery, { params: params })
     const rowWithTotal = countResults.rows.find((row: any) => { return row.total })
     const totalRecords = rowWithTotal ? rowWithTotal.total : 0
@@ -994,7 +995,7 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
   }
 
   async selectTopStream(table: string, orderBy: OrderBy[], filters: string | TableFilter[], chunkSize: number, schema: string = this._defaultSchema): Promise<StreamResults> {
-    const qs = this.buildSelectTopQueries({
+    const qs = await this.buildSelectTopQueries({
       table, orderBy, filters, version: this.version, schema
     })
     // const cursor = new Cursor(qs.query, qs.params)
@@ -1204,11 +1205,12 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
 
   // this will manage the connection for you, but won't call rollback
   // on an error, for that use `runWithTransaction`
-  private async runWithConnection<T>(child: (c: PoolClient) => Promise<T>): Promise<T> {
+  protected async runWithConnection<T>(child: (c: PoolClient) => Promise<T>): Promise<T> {
     const connection = await this.conn.pool.connect()
     try {
       return await child(connection)
-    } finally {
+    } 
+    finally {
       connection.release()
     }
   }
@@ -1256,7 +1258,7 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
     };
   }
 
-  buildSelectTopQueries(options: STQOptions): STQResults {
+  async buildSelectTopQueries(options: STQOptions): Promise<STQResults> {
     const filters = options.filters
     const orderBy = options.orderBy
     const selects = options.selects ?? ['*']
@@ -1276,9 +1278,10 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
 
     if (_.isString(filters)) {
       filterString = `WHERE ${filters}`
-    } else if (filters && filters.length > 0) {
+    } 
+    else if (filters && filters.length > 0) {
       let paramIdx = 1
-      const allFilters = filters.map((item) => {
+      const allFilters = await Promise.all(filters.map(async (item) => {
         if (item.type === 'in' && _.isArray(item.value)) {
           const values = item.value.map((v, idx) => {
             return options.inlineParams
@@ -1287,15 +1290,52 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
           })
           paramIdx += values.length
           return `${wrapIdentifier(item.field)} ${item.type.toUpperCase()} (${values.join(',')})`
-        } else if (item.type.includes('is')) {
+        }
+        else if (item.type === 'in') {
+          // Check if this is actually an array column using metadata
+          const isArray = await this.isArrayColumn(options.table, item.field, options.schema);
+          if (isArray) {
+            // Handle PostgreSQL array columns with IN operator using ANY syntax
+            const values = _.isArray(item.value) ? item.value : [item.value]
+            const anyConditions = values.map((val) => {
+              const value = options.inlineParams
+                ? knex.raw('?', [val]).toQuery()
+                : `$${paramIdx++}`
+              return `${value} = ANY(${wrapIdentifier(item.field)})`
+            })
+            return anyConditions.length === 1 ? anyConditions[0] : `(${anyConditions.join(' OR ')})`
+          } else {
+            // Handle regular IN operator for non-array columns
+            const values = _.isArray(item.value) ? item.value : [item.value]
+            const placeholders = values.map(() => {
+              return options.inlineParams
+                ? knex.raw('?', [values[paramIdx - 1]]).toQuery()
+                : `$${paramIdx++}`
+            })
+            return `${wrapIdentifier(item.field)} ${item.type.toUpperCase()} (${placeholders.join(',')})`
+          }
+        } 
+        else if (item.type.includes('is')) {
           return `${wrapIdentifier(item.field)} ${item.type.toUpperCase()} NULL`
+        } 
+        else if (item.type === '=' && item.field) {
+          // Check if this is actually an array column using metadata
+          const isArray = await this.isArrayColumn(options.table, item.field, options.schema);
+          if (isArray) {
+            // Handle PostgreSQL array columns with equality operator
+            const value = options.inlineParams
+              ? knex.raw('?', [item.value]).toQuery()
+              : `$${paramIdx}`
+            paramIdx += 1
+            return `${value} = ANY(${wrapIdentifier(item.field)})`
+          }
         }
         const value = options.inlineParams
           ? knex.raw('?', [item.value]).toQuery()
           : `$${paramIdx}`
         paramIdx += 1
         return `${wrapIdentifier(item.field)} ${item.type.toUpperCase()} ${value}`
-      })
+      }))
       filterString = "WHERE " + joinFilters(allFilters, filters)
 
       params = filters.filter((item) => !!item.value).flatMap((item) => {
@@ -1326,6 +1366,17 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
   // ************************************************************************************
   // PROTECTED HELPER FUNCTIONS
   // ************************************************************************************
+
+  private async isArrayColumn(table: string, fieldName: string, schema: string = this._defaultSchema): Promise<boolean> {
+    try {
+      const columns = await this.listTableColumns(table, schema);
+      const column = columns.find(col => col.columnName === fieldName);
+      return column ? (column.dataType.includes('[]') || column.dataType.toLowerCase().includes('array')) : false;
+    } catch (error) {
+      // Fallback to false if we can't determine the column type
+      return false;
+    }
+  }
 
   protected countQuery(options: STQOptions, baseSQL: string): string {
     // This comes from this PR, it provides approximate counts for PSQL
@@ -1605,7 +1656,7 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
     selects = ["*"],
     inlineParams?: boolean,
   ): Promise<STQResults> {
-    return this.buildSelectTopQueries({
+    return await this.buildSelectTopQueries({
       table,
       offset,
       limit,
@@ -1617,10 +1668,6 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
       inlineParams
     })
   }
-
-
-
-
 
   // If a type starts with an underscore - it's an array
   // so we need to turn the string representation back to an array

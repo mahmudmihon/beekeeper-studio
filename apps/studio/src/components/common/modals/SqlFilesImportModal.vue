@@ -17,9 +17,10 @@
           <i class="material-icons">clear</i>
         </a>
         <div class="message">
-          This will make a copy of your .sql files and add them to your Beekeeper
-          Studio saved queries. Any changes to the original .sql files will not be
-          reflected in Beekeeper Studio.
+          Query Sharp will import the following SQL files:
+          This will make a copy of your .sql files and add them to your Query Sharp
+          saved queries. Any changes to the original .sql files will not be
+          reflected in Query Sharp.
         </div>
         <div class="file-picker-wrapper">
           <file-picker

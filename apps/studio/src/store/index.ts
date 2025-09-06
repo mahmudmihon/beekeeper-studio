@@ -126,7 +126,7 @@ const store = new Vuex.Store<State>({
     selectedSidebarItem: null,
     workspaceId: LocalWorkspace.id,
     storeInitialized: false,
-    windowTitle: 'Beekeeper Studio',
+    windowTitle: 'Query Sharp',
     defaultSchema: null,
     versionString: null,
     connError: null,
@@ -414,8 +414,8 @@ const store = new Vuex.Store<State>({
     updateWindowTitle(context) {
       const config = context.state.usedConfig
       let title = config
-        ? `${BeekeeperPlugin.buildConnectionName(config)} - Beekeeper Studio`
-        : 'Beekeeper Studio'
+        ? `${BeekeeperPlugin.buildConnectionName(config)} - Query Sharp`
+        : 'Query Sharp'
       if (context.getters.isTrial && context.getters.isUltimate) {
         const days = context.rootGetters['licenses/licenseDaysLeft']
         title += ` - Free Trial (${window.main.pluralize('day', days, true)} left)`

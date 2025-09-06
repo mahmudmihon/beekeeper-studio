@@ -1,4 +1,3 @@
-
 const fpmOptions = [
   "--after-install=build/deb-postinstall"
 ]
@@ -11,11 +10,9 @@ const rpmFpmOptions = [
 // support request open to digicert currently (Feb 2025)
 const certSubject = 'SERIALNUMBER=803010247, C=US, ST=Texas, L=Dallas, O="Rathbone Labs, LLC", CN="Rathbone Labs, LLC"'
 
-
-
 module.exports = {
-  appId: "io.beekeeperstudio.desktop",
-  productName: "Beekeeper Studio",
+  appId: "io.querysharp.desktop",
+  productName: "Query Sharp",
   releaseInfo: {
     releaseNotesFile: "build/release-notes.md"
   },
@@ -136,7 +133,7 @@ module.exports = {
   mac: {
     entitlements: "./build/entitlements.mac.plist",
     entitlementsInherit: "./build/entitlements.mac.plist",
-    icon: './public/icons/mac/bk-icon.icns',
+    icon: './public/icons/mac/query-sharp.icns',
     category: "public.app-category.developer-tools",
     "hardenedRuntime": true,
     notarize: true,
@@ -154,7 +151,7 @@ module.exports = {
       'pacman'
     ],
     desktop: {
-      'StartupWMClass': 'beekeeper-studio'
+      'StartupWMClass': 'query-sharp'
     },
     publish: ['github']
   },
@@ -211,8 +208,8 @@ module.exports = {
     oneClick: false
   },
   appx: {
-    applicationId: "beekeeperstudio",
+    applicationId: "querysharp",
     publisher: certSubject.replaceAll('"', "&quot;"),
-    publisherDisplayName: "Beekeeper Studio"
+    publisherDisplayName: "Query Sharp"
   }
 }

@@ -102,12 +102,16 @@ function buildFilterString(
         ? `HEX(${DuckDBData.wrapIdentifier(item.field)})`
         : DuckDBData.wrapIdentifier(item.field);
 
-      if (item.type === "in") {
+      if (item.type === "in" || item.type === "not in") {
         const questionMarks = _.isArray(item.value)
           ? item.value.map(() => "?").join(",")
           : "?";
 
         return `${field} ${item.type.toUpperCase()} (${questionMarks})`;
+      }
+
+      if (item.type === "between" || item.type === "not between") {
+        return `${field} ${item.type.toUpperCase()} ? AND ?`;
       }
 
       if (item.type.includes("is")) {

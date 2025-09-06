@@ -13,7 +13,7 @@
         <div class="plugin-manager-content">
           <div class="plugin-list-container">
             <div class="description">
-              Manage and install plugins in Beekeeper Studio.
+              Manage and install plugins in Query Sharp.
             </div>
             <error-alert :error="errors" />
             <plugin-list
@@ -63,7 +63,7 @@ export default Vue.extend({
       loadingPlugins: false,
       errors: this.$plugin.failedToInitialize
         ? [
-            "Plugin system was not initialized properly. Please restart Beekeeper Studio to continue using plugins or report this issue.",
+            "Plugin system was not initialized properly. Please restart Query Sharp to continue using plugins or report this issue.",
           ]
         : null,
     };

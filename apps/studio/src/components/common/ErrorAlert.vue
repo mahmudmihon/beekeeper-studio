@@ -34,7 +34,7 @@
       >
         <a
           :href="helpLink"
-          title="Read about this error on the Beekeeper Studio docs"
+          title="Read about this error on the Query Sharp docs"
         >Learn more about this error</a>
       </div>
     </div>

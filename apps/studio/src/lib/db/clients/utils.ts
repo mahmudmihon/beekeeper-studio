@@ -100,17 +100,23 @@ export function buildFilterString(filters: TableFilter[], columns = []) {
         `HEX(${wrapIdentifier(item.field)})` :
         wrapIdentifier(item.field);
 
-      if (item.type === 'in') {
+      if (item.type === 'in' || item.type === 'not in') {
         const questionMarks = _.isArray(item.value) ?
           item.value.map(() => '?').join(',')
           : '?'
 
         return `${field} ${item.type.toUpperCase()} (${questionMarks})`
-      } else if (item.type.includes('is')) {
+      } 
+      else if (item.type === 'between' || item.type === 'not between') {
+        return `${field} ${item.type.toUpperCase()} ? AND ?`
+      } 
+      else if (item.type.includes('is')) {
         return `${field} ${item.type.toUpperCase()} NULL`
       }
+
       return `${field} ${item.type.toUpperCase()} ?`
     })
+    
     filterString = "WHERE " + joinFilters(allFilters, filters)
 
     log.info('FILTER: ', filterString)

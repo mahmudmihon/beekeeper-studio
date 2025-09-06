@@ -131,17 +131,36 @@ export function normalizeFilters(filters: TableFilter[]) {
   const normalized: TableFilter[] = [];
   for (const filter of filters as TableFilter[]) {
     if (!(filter.type && filter.field && (filter.value || filter.type.includes('is')))) continue;
-    if (filter.type === "in") {
+
+    if (filter.type === "in" || filter.type === "not in") {
       const value = (filter.value as string).split(/\s*,\s*/);
       normalized.push({ ...filter, value });
-    } else {
+    } 
+    else if (filter.type === "between" || filter.type === "not between") {
+      // Parse BETWEEN values: "value1 AND value2" or "value1,value2"
+      const valueStr = filter.value as string;
+      let values: string[];
+      if (valueStr.includes(' AND ')) {
+        values = valueStr.split(/\s+AND\s+/i).map(v => v.trim());
+      } else {
+        values = valueStr.split(/\s*,\s*/);
+      }
+      // Ensure we have exactly 2 values for BETWEEN
+      if (values.length === 2) {
+        normalized.push({ ...filter, value: values });
+      }
+    } 
+    else {
       normalized.push(filter);
 
       if (filter.type.includes('is')) {
         continue;
       }
     }
-    filter.value = filter.value.toString();
+    
+    if (!filter.type.includes('is') && !['between', 'not between', 'in', 'not in'].includes(filter.type)) {
+      filter.value = filter.value.toString();
+    }
   }
   return normalized;
 }

@@ -1251,11 +1251,20 @@ export class SQLServerClient extends BasicDatabaseClient<SQLServerResult> {
           D.escapeString(item.value, true)
 
         if (item.type.includes('is')) wrappedValue = 'NULL';
+        
+        if (item.type === 'between' || item.type === 'not between') {
+          const values = _.isArray(item.value) ? item.value : [item.value];
+          if (values.length === 2) {
+            wrappedValue = `${D.escapeString(values[0], true)} AND ${D.escapeString(values[1], true)}`;
+          }
+        }
 
         return `${this.wrapIdentifier(item.field)} ${item.type.toUpperCase()} ${wrappedValue}`
       })
+
       filterString = "WHERE " + joinFilters(allFilters, filters)
     }
+    
     return filterString
   }
 

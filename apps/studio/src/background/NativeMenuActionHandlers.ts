@@ -74,9 +74,9 @@ export default class NativeMenuActionHandlers implements IMenuActionHandler {
   }
   about(): void {
     app.setAboutPanelOptions({
-      applicationName: "Beekeeper Studio",
+      applicationName: "Query Sharp",
       applicationVersion: app.getVersion(),
-      copyright: "Beekeeper Studio Team",
+      copyright: "Query Sharp Team",
       authors: ["Matthew Rathbone", "Gregory Garden", "All the wonderful Github contributors"],
       website: "https://beekeeperstudio.io",
       iconPath: getIcon()

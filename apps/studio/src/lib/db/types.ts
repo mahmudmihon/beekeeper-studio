@@ -42,7 +42,10 @@ export const TableFilterSymbols = [
   { value: '<=', label: 'less than or equal' },
   { value: '>', label: 'greater than'},
   { value: ">=", label: "greater than or equal" },
+  { value: "between", label: 'between', rangeInput: true },
+  { value: "not between", label: 'not between', rangeInput: true },
   { value: "in", label: 'in', arrayInput: true },
+  { value: "not in", label: 'not in', arrayInput: true },
   { value: "is", label: "is null", nullOnly: true },
   { value: "is not", label: "is not null", nullOnly: true }
 ]

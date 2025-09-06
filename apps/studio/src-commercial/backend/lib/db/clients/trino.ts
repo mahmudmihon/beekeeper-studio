@@ -112,7 +112,10 @@ export class TrinoClient extends BasicDatabaseClient<TrinoResult> {
     // TODO: Add ssl using SecureContextOptions (https://trinodb.github.io/trino-js-client/types/ConnectionOptions.html)
     
     if ((this.server.config.user != null && this.server.config.user !== '') || (this.server.config.password != null && this.server.config.password !== '')) {
-      connectionObj.auth = new BasicAuth(this.server.config.user, this.server.config.password)
+      connectionObj = {
+        ...connectionObj,
+        auth: new BasicAuth(this.server.config.user, this.server.config.password)
+      }
     }
 
     this.client = TrinoNodeClient.create(connectionObj)
@@ -583,12 +586,20 @@ export class TrinoClient extends BasicDatabaseClient<TrinoResult> {
           return
         }
 
-        // Handle IN
-        if (op === "IN" && Array.isArray(val)) {
+        // Handle IN and NOT IN
+        if ((op === "IN" || op === "NOT IN") && Array.isArray(val)) {
           const values = val
             .map((v) => this.wrapDynamicLiteral(v))
             .join(", ")
-          filtersWithoutParams.push(`${field} IN (${values})`)
+          filtersWithoutParams.push(`${field} ${op} (${values})`)
+          return
+        }
+
+        // Handle BETWEEN and NOT BETWEEN
+        if ((op === "BETWEEN" || op === "NOT BETWEEN") && Array.isArray(val) && val.length === 2) {
+          const startValue = this.wrapDynamicLiteral(val[0])
+          const endValue = this.wrapDynamicLiteral(val[1])
+          filtersWithoutParams.push(`${field} ${op} ${startValue} AND ${endValue}`)
           return
         }
 

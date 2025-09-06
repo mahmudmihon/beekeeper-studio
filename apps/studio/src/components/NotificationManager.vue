@@ -12,7 +12,7 @@ export default Vue.extend({
       notificationInterval: null,
       timeoutID: null,
       upsellNotificationOptions: {
-        text: "👋 Beekeeper Studio is run by a small team. Buy the full version of Beekeeper Studio to support development and get more features. Thank you ♥",
+        text: "You must restart Query Sharp for this change to take effect",
         timeout: 1000 * 60 * 5,
         queue: "upsell",
         killer: 'upsell',
