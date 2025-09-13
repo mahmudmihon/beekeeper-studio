@@ -2,12 +2,22 @@ import _ from 'lodash'
 import CodeMirror from 'codemirror'
 import { Version } from '@/common/version'
 
-const communityDialects = ['postgresql', 'sqlite', 'sqlserver', 'mysql', 'redshift', 'bigquery'] as const
+const communityDialects = ['postgresql', 'sqlite', 'sqlserver', 'mysql', 'redshift', 'bigquery', 'redis'] as const
 const ultimateDialects = ['oracle', 'cassandra', 'firebird', 'clickhouse', 'mongodb', 'duckdb', 'sqlanywhere', 'surrealdb', 'trino'] as const
 
 export const Dialects = [...communityDialects, ...ultimateDialects] as const
 
 export const NoSqlDialects = ['mongodb', 'surrealdb', 'cassandra'] as const
+
+interface ImportDefaultDataTypes {
+  stringType?: string
+  longStringType?: string 
+  dateType?: string
+  booleanType?: string
+  integerType?: string
+  numberType?: string
+  defaultType: string
+}
 
 export const SpecialTypes = ['autoincrement']
 export type Dialect = typeof Dialects[number]
@@ -47,7 +57,8 @@ export const DialectTitles: {[K in Dialect]: string} = {
   mongodb: "MongoDB",
   sqlanywhere: 'SqlAnywhere',
   trino: 'Trino',
-  surrealdb: 'SurrealDB'
+  surrealdb: 'SurrealDB',
+  redis: 'Redis'
 }
 
 export const KnexDialects = ['postgres', 'sqlite3', 'mssql', 'redshift', 'mysql', 'oracledb', 'firebird', 'cassandra-knex']
@@ -100,6 +111,7 @@ export interface DialectData {
   queryDialectOverride?: string,
   columnTypes?: ColumnType[],
   constraintActions?: string[]
+  importDataType?: ImportDefaultDataTypes
   wrapIdentifier?: (s: string) => string
   editorFriendlyIdentifier?: (s: string) => string
   escapeString?: (s: string, quote?: boolean) => string
@@ -110,8 +122,10 @@ export interface DialectData {
   usesOffsetPagination?: boolean
   requireDataset?: boolean,
   disallowedSortColumns?: string[],
+  rawFilterPlaceholder?: string,
   disabledFeatures?: {
     rawFilters?: boolean
+    builderFilters?: boolean
     shell?: boolean
     queryEditor?: boolean
     informationSchema?: {
@@ -175,6 +189,7 @@ export interface DialectData {
     sqlCreate?: boolean
     compositeKeys?: boolean    // Whether composite keys are supported
     schemaValidation?: boolean  // Whether schema validation features are disabled
+    readOnlyPrimaryKeys?: boolean  // Whether primary keys are read-only
   },
   notices?: {
     infoSchema?: string
