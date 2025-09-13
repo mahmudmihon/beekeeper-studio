@@ -11,7 +11,7 @@ import { entityFilter } from '../lib/db/sql_tools'
 import { BeekeeperPlugin } from '../plugins/BeekeeperPlugin'
 
 import RawLog from '@bksLogger'
-import { Dialect, DialectTitles, dialectFor } from '@shared/lib/dialects/models'
+import { Dialect, DialectTitles, dialectFor, NoSqlDialects } from '@shared/lib/dialects/models'
 import { PinModule } from './modules/PinModule'
 import { getDialectData } from '@shared/lib/dialects'
 import { SearchModule } from './modules/SearchModule'
@@ -463,6 +463,15 @@ const store = new Vuex.Store<State>({
         await context.dispatch('updateTables')
         await context.dispatch('updateRoutines')
         context.dispatch('updateWindowTitle', config)
+
+        // Switch away from joins tab if connecting to NoSQL database
+        const dialect = dialectFor(config.connectionType)
+        if (dialect && NoSqlDialects.includes(dialect as any)) {
+          const currentActiveItem = (context.rootState as any).sidebar.globalSidebarActiveItem
+          if (currentActiveItem === 'joins') {
+            await context.dispatch('sidebar/setGlobalSidebarActiveItem', 'tables')
+          }
+        }
 
         await Vue.prototype.$util.send('appdb/tabhistory/clearDeletedTabs', { workspaceId: context.state.usedConfig.workspaceId, connectionId: context.state.usedConfig.id }) 
 

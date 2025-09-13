@@ -7,6 +7,7 @@ const ultimateDialects = ['oracle', 'cassandra', 'firebird', 'clickhouse', 'mong
 
 export const Dialects = [...communityDialects, ...ultimateDialects] as const
 
+export const NoSqlDialects = ['mongodb', 'surrealdb', 'cassandra'] as const
 
 export const SpecialTypes = ['autoincrement']
 export type Dialect = typeof Dialects[number]
@@ -199,7 +200,6 @@ export const defaultConstraintActions = [
   'CASCADE'
 ]
 
-
 export function defaultEscapeString(value: string, quote?: boolean): string {
   if (!value) return null
   const result = `${value.toString().replaceAll(/'/g, "''")}`
@@ -306,8 +306,6 @@ export interface IndexAlterations {
   schema?: string
 }
 
-
-
 export interface CreateRelationSpec {
   toTable: string;
   toSchema?: string;
@@ -318,11 +316,9 @@ export interface CreateRelationSpec {
   onDelete?: string;
 }
 
-
 export type DialectConfig = {
   [K in Dialect]?: SchemaConfig
 }
-
 
 export interface TableKey {
   isComposite: boolean;
