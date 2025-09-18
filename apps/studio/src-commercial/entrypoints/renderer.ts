@@ -44,6 +44,11 @@ import * as UIKit from '@beekeeperstudio/ui-kit'
 
 (async () => {
 
+  // Wait for preload script to be ready
+  while (!window.main) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+
   await window.main.requestPlatformInfo();
   await window.main.requestBksConfigSource();
   rawLog.transports.console.level = "info"

@@ -81,7 +81,13 @@ _.mixin({
 });
 
 process.on('uncaughtException', (error) => {
-  log.error(error);
+  log.error('Uncaught exception in utility process:', error);
+  // Don't exit the process, just log the error
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  log.error('Unhandled rejection in utility process:', reason, 'at promise:', promise);
+  // Don't exit the process, just log the error
 });
 
 process.parentPort.on('message', async ({ data, ports }) => {
@@ -125,7 +131,11 @@ async function runHandler(id: string, name: string, args: any) {
       })
       .finally(() => {
         try {
-          state(args.sId).port.postMessage(replyArgs);
+          if (args.sId && state(args.sId) && state(args.sId).port) {
+            state(args.sId).port.postMessage(replyArgs);
+          } else {
+            log.error('Cannot send message - invalid state or port for sId:', args.sId);
+          }
         } catch (e) {
           log.error('ERROR SENDING MESSAGE: ', replyArgs, '\n\n\n ERROR: ', e)
         }
@@ -135,7 +145,11 @@ async function runHandler(id: string, name: string, args: any) {
     replyArgs.error = `Invalid handler name: ${name}`;
 
     try {
-      state(args.sId).port.postMessage(replyArgs);
+      if (args.sId && state(args.sId) && state(args.sId).port) {
+        state(args.sId).port.postMessage(replyArgs);
+      } else {
+        log.error('Cannot send error message - invalid state or port for sId:', args.sId);
+      }
     } catch (e) {
       log.error('ERROR SENDING MESSAGE: ', replyArgs, '\n\n\n ERROR: ', e)
     }
@@ -156,13 +170,21 @@ async function initState(sId: string, port: MessagePortMain) {
 }
 
 async function init() {
-  ormConnection = new ORMConnection(platformInfo.appDbPath, false);
-  await ormConnection.connect();
+  try {
+    ormConnection = new ORMConnection(platformInfo.appDbPath, false);
+    await ormConnection.connect();
+    log.info('ORM connection established successfully');
+  } catch (e) {
+    log.error('Failed to establish ORM connection:', e);
+    // Don't throw here, let the process continue
+  }
 
   try {
     await pluginManager.initialize();
+    log.info('Plugin manager initialized successfully');
   } catch (e) {
     log.error("Error initializing plugin manager", e);
+    // Don't throw here, let the process continue
   }
 
   process.parentPort.postMessage({ type: 'ready' });

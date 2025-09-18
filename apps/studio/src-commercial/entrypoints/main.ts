@@ -56,6 +56,7 @@ async function createUtilityProcess() {
     path.join(__dirname, 'utility.js'),
     [],
     {
+      execArgv: isDevelopment ? ['--require', 'ts-node/register'] : undefined,
       env: { ...process.env, ...args },
       stdio: ['ignore', 'inherit', 'inherit'],
       serviceName: 'BeekeeperUtility'
@@ -226,7 +227,7 @@ app.on('ready', async () => {
   } else {
     if (getActiveWindows().length === 0) {
       const settings = await initBasics()
-      initializeSecurity(app);
+      initializeSecurity();
       await createUtilityProcess()
 
       await buildWindow(settings)
