@@ -6,9 +6,9 @@
     <form
       @submit.prevent="submit"
       @scroll="
-        $event.target.classList.toggle(
+        ($event.target as HTMLElement).classList.toggle(
           'filter-outside-viewport',
-          $event.target.scrollTop > 31
+          ($event.target as HTMLElement).scrollTop > 31
         )
       "
       ref="filterGroupWrapper"
@@ -276,7 +276,11 @@ export default Vue.extend({
       this.filters.push(cloned);
       this.$nextTick(() => {
         const filters = this.$refs.multipleFilters.children;
-        filters[filters.length - 1].scrollIntoView();
+        filters[filters.length - 1].scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'nearest'
+        });
       });
     },
     removeFilter(shiftedIdx: number) {

@@ -160,7 +160,11 @@ export default Vue.extend({
           );
         }
         if (shouldScroll) {
-          this.$el.scrollIntoView();
+          this.$el.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest'
+          });
         }
       }
     },

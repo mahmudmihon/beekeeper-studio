@@ -141,7 +141,11 @@ import { AppEvent } from "@/common/AppEvent";
       },
       selected() {
         if (this.selected && !this.noSelect) {
-          this.$el.scrollIntoView()
+          this.$el.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest'
+          })
         }
       }
     },

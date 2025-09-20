@@ -546,9 +546,17 @@ x-buttons {
   }
   .CodeMirror-cursor {
     border-color: $text-dark;
+    animation: light-theme-blink 1.2s step-end infinite;
+    transition: opacity 0.15s ease-in-out;
   }
   span.cm-bracket {
     color: $text;
+  }
+  
+  // Light theme cursor blink animation
+  @keyframes light-theme-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
   }
 }
 

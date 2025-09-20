@@ -99,7 +99,11 @@ export default Vue.extend({
   watch: {
     selected() {
       if (this.selected) {
-        this.$el.scrollIntoView();
+        this.$el.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'nearest'
+        });
       }
     },
   },

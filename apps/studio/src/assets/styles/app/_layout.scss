@@ -127,12 +127,12 @@ x-buttons > x-button[menu].btn {
 }
 .btn-icon {
   .material-icons:first-child {
-    margin-right: $gutter-h * 0.65;
+    margin-right: calc(#{$gutter-h} * 0.65);
     margin-left: 0;
   }
 
   .material-icons:last-child {
-    margin-left: $gutter-h * 0.65;
+    margin-left: calc(#{$gutter-h} * 0.65);
   }
 }
 .btn-info {

@@ -37,7 +37,7 @@
       }
       .nav-pill {
         font-weight: 500;
-        padding: $gutter-w ($gutter-w * 1.25);
+        padding: calc(#{$gutter-w}) calc(#{$gutter-w} * 1.25);
         color: $text-light;
         transition: color 0.2s ease-in-out,
                     box-shadow 0.2s ease-in-out;

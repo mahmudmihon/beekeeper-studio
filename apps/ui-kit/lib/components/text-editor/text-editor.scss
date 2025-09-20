@@ -244,9 +244,35 @@
   // Cursor
   .cm-cursor {
     border-left-color: var(--bks-text-editor-cursor-bg-color);
+    animation: blink 1.2s step-end infinite;
+    transition: opacity 0.15s ease-in-out;
   }
+  
+  .cm-cursor.cm-cursor-primary {
+    animation: blink 1.2s step-end infinite;
+  }
+  
   .cm-fat-cursor:not(.CodeMirror) {
     background-color: var(--bks-text-editor-fatcursor-bg-color);
+    animation: blink 1.2s step-end infinite;
+    transition: opacity 0.15s ease-in-out;
+  }
+  
+  // Cursor blink animation
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+  
+  // Smooth cursor when focused
+  .cm-focused .cm-cursor {
+    animation: blink 1.2s step-end infinite;
+  }
+  
+  // Disable blinking when selecting text
+  .cm-cursor.cm-cursor-secondary {
+    animation: none;
+    opacity: 0.4;
   }
 
   // Active line

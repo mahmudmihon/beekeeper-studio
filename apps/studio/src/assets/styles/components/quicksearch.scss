@@ -1,6 +1,5 @@
 @use "sass:color";
 
-
 .quicksearch {
   $input-height:       2.6rem;
 
@@ -26,7 +25,7 @@
   // Quicksearch
   .quicksearch-wrap {
     position: absolute;
-    top: $gutter-w * 3;
+    top: calc(#{$gutter-w} * 3);
     left: 50%;
     transform: translate(-50%, 0);
     display: flex;
@@ -57,7 +56,7 @@
     bottom: 0;
     display: flex;
     align-items: center;
-    right: $gutter-w;
+    right: calc(#{$gutter-w});
     line-height: $input-height;
     cursor: pointer;
     .material-icons {
@@ -78,8 +77,8 @@
     background: color.adjust($theme-bg, $lightness: 5%);
     padding-left: 0;
     border-radius: 6px;
-    margin: ($gutter-h * 0.5) 0;
-    padding: $gutter-h 0;
+    margin: calc(#{$gutter-h} * 0.5) 0;
+    padding: calc(#{$gutter-h}) 0;
     z-index: 1;
     // @extend .card-shadow;
     &.no-results {
@@ -87,14 +86,14 @@
     }
     &.empty {
       color: $text-lighter;
-      padding: $gutter-w ($gutter-w * 1.25);
+    padding: calc(#{$gutter-w}) calc(#{$gutter-w} * 1.25);
       strong {
         display: block;
         color: $text-dark;
-        margin-bottom: $gutter-h * 1.5;
+        margin-bottom: calc(#{$gutter-h} * 1.5);
       }
       p {
-        margin: 0 0 $gutter-h;
+          margin: 0 0 calc(#{$gutter-h});
         color: $text;
       }
       li {
@@ -114,12 +113,13 @@
       list-style: none;
       height: 2.4rem;
       line-height: 2.4rem;
-      padding: 0 $gutter-w * 1.25;
+      padding: 0 calc(#{$gutter-w} * 1.25);
     }
     .item-icon {
-      margin-right: $gutter-h;
+        margin-right: calc(#{$gutter-h});
     }
   }
+  
   .result-item {
     display: flex;
     align-items: center;

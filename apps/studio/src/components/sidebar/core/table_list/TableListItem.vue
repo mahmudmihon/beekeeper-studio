@@ -173,13 +173,19 @@ export default {
     active() {
       if (this.selected && !this.noSelect) {
         let shouldScroll = true
+
         if (this.container) {
           const box = this.$el.getBoundingClientRect()
           const parentBox = this.container.getBoundingClientRect()
           shouldScroll = !(box.top > parentBox.top && box.bottom <= parentBox.bottom)
         }
+        
         if (shouldScroll) {
-          this.$el.scrollIntoView()
+          this.$el.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest'
+          })
         }
       }
     }

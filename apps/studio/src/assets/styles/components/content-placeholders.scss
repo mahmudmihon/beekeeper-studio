@@ -57,11 +57,9 @@ $vue-content-placeholders-spacing: 10px !default;
 
 @mixin vue-content-placeholders-spacing {
   [class^="vue-content-placeholders-"] + & {
-    margin-top: 2 * $vue-content-placeholders-spacing;
+    margin-top: calc(#{$vue-content-placeholders-spacing} * 2);
   }
 }
-
-
 
 // Styles
 .vue-content-placeholders-heading {
@@ -70,8 +68,8 @@ $vue-content-placeholders-spacing: 10px !default;
 
   &__img {
     @include vue-content-placeholders;
-    width: 2 * $vue-content-placeholders-line-height + 3 * $vue-content-placeholders-spacing;
-    height: 2 * $vue-content-placeholders-line-height + 3 * $vue-content-placeholders-spacing;
+    width: calc(#{$vue-content-placeholders-line-height} * 2 + #{$vue-content-placeholders-spacing} * 3);
+    height: calc(#{$vue-content-placeholders-line-height} * 2 + #{$vue-content-placeholders-spacing} * 3);
   }
 
   &__content {
@@ -84,7 +82,7 @@ $vue-content-placeholders-spacing: 10px !default;
   &__title {
     @include vue-content-placeholders;
     width: 85%;
-    margin-bottom: $vue-content-placeholders-spacing;
+    margin-bottom: calc(#{$vue-content-placeholders-spacing});
     background: $vue-content-placeholders-primary-color;
   }
 
