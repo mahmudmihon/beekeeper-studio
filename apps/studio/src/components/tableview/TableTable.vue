@@ -85,14 +85,14 @@
       >
         <div class="flex-center flex-middle flex">
           <a
-            v-if="(this.page > 1)"
+            v-if="page && page > 1"
             @click="page = 1"
             v-tooltip="$bksConfig.keybindings.tableTable.firstPage"
           ><i
             class="material-icons"
           >first_page</i></a>
           <a
-            v-if="(this.page > 1)"
+            v-if="page && page > 1"
             @click="page = page - 1"
             v-tooltip="$bksConfig.keybindings.tableTable.previousPage"
           ><i
@@ -221,10 +221,10 @@
           <x-menu>
             <x-menuitem
               v-if="isCassandra"
-              @click="cassandraAllowFilter = !this.isCassandra"
+              @click="cassandraAllowFilter = !isCassandra"
             >
               <x-label>
-                <i class="material-icons">{{ this.isCassandra ? 'check' : 'horizontal_rule' }}</i>
+                <i class="material-icons">{{ isCassandra ? 'check' : 'horizontal_rule' }}</i>
                 Allow Filtering
               </x-label>
             </x-menuitem>
@@ -1770,6 +1770,11 @@ export default Vue.extend({
             }
             this.data = response.result
 
+            // Use totalRows from database response if available
+            if (response.totalRows !== undefined) {
+              this.totalRecords = response.totalRows;
+            }
+
             if (_.xor(response.fields, this.table.columns.map(c => c.columnName)).length > 0) {
               log.debug('table has changed, updating')
               await this.$store.dispatch('updateTableColumns', this.table)
@@ -1837,8 +1842,14 @@ export default Vue.extend({
     },
     async jumpToLastPage() {
       try {
-        const totalRows = await this.connection.getTableLength(this.table.name, this.table.schema); // -> SELECT (*) FROM table
-        this.totalRecords = totalRows;
+        // Use totalRecords if already available from database response
+        let totalRows = this.totalRecords;
+        
+        // Fallback to getTableLength if totalRecords is not available
+        if (totalRows === null || totalRows === undefined) {
+          totalRows = await this.connection.getTableLength(this.table.name, this.table.schema);
+          this.totalRecords = totalRows;
+        }
 
         const lastPage = Math.ceil(totalRows / this.limit);
 

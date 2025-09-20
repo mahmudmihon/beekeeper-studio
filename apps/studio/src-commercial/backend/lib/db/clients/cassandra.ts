@@ -98,6 +98,7 @@ export class CassandraClient extends BasicDatabaseClient<CassandraResult> {
       backDirFormat: false,
       restore: false,
       indexNullsNotDistinct: false,
+      transactions: false
     }
   }
 
@@ -428,6 +429,11 @@ export class CassandraClient extends BasicDatabaseClient<CassandraResult> {
     // const { allowFilter } = userOptions
     // NOTE (@day): not sure why we added the userOptions thing here, talk to @will
     const allowFilter = true;
+    
+    // Determine if we have filters
+    const hasFilters = filters && ((typeof filters === 'string' && filters.trim()) || (Array.isArray(filters) && filters.length > 0));
+    
+    // Build data query
     const qs = this.buildSelectTopQueries({
       table, offset, limit, orderBy, filters, schema: keyspace, selects, allowFilter
     })
@@ -439,16 +445,71 @@ export class CassandraClient extends BasicDatabaseClient<CassandraResult> {
     if (limit) options.fetchSize = limit
     if (offset) options.pageState = offset
 
-    const result = await this.driverExecuteSingle(qs.query, { params: qs.params, options })
+    // Execute data query and count queries in parallel
+    const [result, countResult] = await Promise.all([
+      this.driverExecuteSingle(qs.query, { params: qs.params, options }),
+      this.buildCountQuery(table, filters, keyspace, allowFilter)
+    ]);
+
     const { rows, columns, hasNext, pageState } = result
     const fields = columns ? this.parseQueryResultColumns(result) : []
+
+    // Calculate total records
+    let totalRecords = 0;
+    if (hasFilters) {
+      // For filtered queries, use the filtered count
+      totalRecords = countResult.filteredCount;
+    } else {
+      // For non-filtered queries, try to get total table count
+      // Since Cassandra doesn't have an efficient way to get total count,
+      // we'll use the filtered count as fallback
+      totalRecords = countResult.totalCount || countResult.filteredCount;
+    }
 
     return {
       result: this.parseRows(rows, columns) || [],
       fields,
       hasNext,
-      pageState: pageState || null
+      pageState: pageState || null,
+      totalRecords
     } as any
+  }
+
+  private async buildCountQuery(table: string, filters: string | TableFilter[], keyspace?: string, allowFilter: boolean = true): Promise<{ filteredCount: number, totalCount?: number }> {
+    const fqTable = this.fqTableName(table, keyspace);
+    
+    // Build filtered count query
+    const { filterString, filterParams } = this.buildFilterString(filters);
+    const allowFilterClause = allowFilter && filterString ? ' ALLOW FILTERING' : '';
+    
+    const filteredCountQuery = `SELECT COUNT(*) as total FROM ${fqTable} ${filterString}${allowFilterClause}`;
+    
+    try {
+      const filteredResult = await this.driverExecuteSingle(filteredCountQuery, { params: filterParams });
+      const filteredCount = (filteredResult.rows?.[0] as any)?.total || 0;
+      
+      // For Cassandra, getting total count without filters can be expensive
+      // We'll only get it if there are no filters, otherwise use filtered count
+      let totalCount: number | undefined;
+      if (!filterString) {
+        totalCount = filteredCount;
+      } else {
+        // Try to get total count without filters, but don't fail if it's too expensive
+        try {
+          const totalCountQuery = `SELECT COUNT(*) as total FROM ${fqTable}${allowFilter ? ' ALLOW FILTERING' : ''}`;
+          const totalResult = await this.driverExecuteSingle(totalCountQuery);
+          totalCount = (totalResult.rows?.[0] as any)?.total || 0;
+        } catch (error) {
+          // If total count fails (e.g., too expensive), use filtered count
+          totalCount = filteredCount;
+        }
+      }
+      
+      return { filteredCount, totalCount };
+    } catch (error) {
+      // If count query fails, return 0
+      return { filteredCount: 0, totalCount: 0 };
+    }
   }
 
   async selectTopSql(table: string, offset: number, limit: number, orderBy: OrderBy[], filters: string | TableFilter[], keyspace?: string, selects?: string[]): Promise<string> {

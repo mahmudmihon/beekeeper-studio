@@ -290,6 +290,11 @@ export class ClickHouseClient extends BasicDatabaseClient<Result> {
       // select all columns with the column names instead of *
       selects = columns.map((v) => v.bksField.name);
     }
+    
+    // Determine if we have filters
+    const hasFilters = (_.isString(filters) && filters.trim().length > 0) || 
+                      (_.isArray(filters) && filters.length > 0);
+    
     const queries = ClickHouseClient.buildSelectTopQuery(
       table,
       offset,
@@ -300,11 +305,19 @@ export class ClickHouseClient extends BasicDatabaseClient<Result> {
       columns,
       selects
     );
-    const { fullQuery } = queries;
-    const result = await this.driverExecuteSingle(fullQuery);
+    
+    // Execute data query and appropriate count query based on filter state
+    const [result, countResult] = await Promise.all([
+      this.driverExecuteSingle(queries.fullQuery),
+      this.driverExecuteSingle(hasFilters ? queries.countQuery : `SELECT count(*) as total FROM ${ClickHouseData.wrapIdentifier(table)}`)
+    ]);
+    
     const fields = this.parseQueryResultColumns(result);
     const rows = await this.serializeQueryResult(result, fields);
-    return { result: rows, fields };
+    const json = countResult.data as ResponseJSON<{ total: number }>;
+    const totalRows = Number(json.data[0].total) || 0;
+    
+    return { result: rows, fields, totalRecords: totalRows };
   }
 
   async selectTopSql(

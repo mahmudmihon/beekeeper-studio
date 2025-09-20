@@ -972,19 +972,37 @@ export class DuckDBClient extends BasicDatabaseClient<DuckDBResult> {
     schema: string,
     selects?: string[]
   ): Promise<TableResult> {
-    const query = await this.selectTopSql(
+    // Determine if we have filters
+    const hasFilters = (_.isString(filters) && filters.trim().length > 0) || 
+                      (_.isArray(filters) && filters.length > 0);
+    
+    const columns = await this.listTableColumns(table);
+    const queries = buildSelectTopQuery(
       table,
       offset,
       limit,
       orderBy,
       filters,
       schema,
+      "total",
+      columns,
       selects
     );
-    const result = await this.driverExecuteSingle(query);
+    
+    // Execute data query and appropriate count query based on filter state
+    const [result, countResult] = await Promise.all([
+      this.driverExecuteSingle(this.knex.raw(queries.query, queries.params).toQuery()),
+      this.driverExecuteSingle(hasFilters 
+        ? this.knex.raw(queries.countQuery, queries.params).toQuery()
+        : this.knex.raw(`SELECT count(*) as total FROM ${DuckDBData.wrapIdentifier(schema)}.${DuckDBData.wrapIdentifier(table)}`).toQuery()
+      )
+    ]);
+    
     const fields = this.parseQueryResultColumns(result);
     const rows = await this.serializeQueryResult(result, fields);
-    return { result: rows, fields };
+    const totalRows = Number(countResult.rows?.[0]?.total) || 0;
+    
+    return { result: rows, fields, totalRecords: totalRows };
   }
 
   protected parseQueryResultColumns(qr: DuckDBResult): BksField[] {

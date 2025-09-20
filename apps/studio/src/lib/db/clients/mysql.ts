@@ -621,11 +621,25 @@ export class MysqlClient extends BasicDatabaseClient<ResultType> {
       columns,
       selects
     );
-    const { query, params } = queries;
-    const result = await this.driverExecuteSingle(query, { params });
+    const { query, countQuery, totalCountQuery, params, hasFilters } = queries;
+    
+    // Use the appropriate count query for pagination:
+    // - When filters are applied, use totalCountQuery for pagination (total pages)
+    // - When no filters, both queries are the same, so use countQuery
+    const paginationCountQuery = hasFilters && totalCountQuery ? totalCountQuery : countQuery;
+    const paginationParams = hasFilters && totalCountQuery ? [] : params;
+    
+    // Execute data query and appropriate count query based on filter state
+    const [result, countResult] = await Promise.all([
+      this.driverExecuteSingle(query, { params }),
+      this.driverExecuteSingle(paginationCountQuery, { params: paginationParams })
+    ]);
+    
     const fields = columns.map((v) => v.bksField).filter((v) => selects && selects.length > 0 ? selects.includes(v.name) : true);
     const rows = await this.serializeQueryResult(result, fields);
-    return { result: rows, fields };
+    const totalRows = countResult.rows?.[0]?.total || countResult.rows?.[0]?.total_table_rows || 0;
+    
+    return { result: rows, fields, totalRecords: totalRows };
   }
 
   async selectTopSql(

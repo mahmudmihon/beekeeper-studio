@@ -402,19 +402,23 @@ export class BigQueryClient extends BasicDatabaseClient<BigQueryResult> {
   async selectTop(table: string, offset: number, limit: number, orderBy: OrderBy[], filters: string | TableFilter[], _schema?: string, selects?: string[]): Promise<TableResult> {
     const columns = await this.listTableColumns(table);
     const bqTable = this.db + "." + table;
-    const { query, countQuery, params } = buildSelectTopQuery(bqTable, offset, limit, orderBy, filters, 'total', columns, selects);
-    const queriesResult = await this.driverExecuteMultiple(query, { countQuery, params });
-    const data = queriesResult[0];
-    const rowCount = Number(data.rowCount);
-    const fields = this.parseQueryResultColumns(data);
-    const rows = await this.serializeQueryResult(data, fields);
+    const { query, countQuery, totalCountQuery, params, hasFilters } = buildSelectTopQuery(bqTable, offset, limit, orderBy, filters, 'total', columns, selects);
+    
+    // Execute data query and appropriate count query based on filter state
+    const [result, countResult] = await Promise.all([
+      this.driverExecuteSingle(query),
+      this.driverExecuteSingle(hasFilters ? countQuery : totalCountQuery)
+    ]);
+    
+    const fields = this.parseQueryResultColumns(result);
+    const rows = await this.serializeQueryResult(result, fields);
+    const totalRows = countResult.rows?.[0]?.total || countResult.rows?.[0]?.total_table_rows || 0;
 
-    const result = {
-      totalRows: rowCount,
+    return {
+      totalRows,
       result: rows,
       fields
     };
-    return result;
   }
 
   async selectTopSql(table: string, offset: number, limit: number, orderBy: OrderBy[], filters: string | TableFilter[], _schema?: string, selects?: string[]): Promise<string> {

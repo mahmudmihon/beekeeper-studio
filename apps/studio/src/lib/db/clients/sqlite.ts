@@ -444,11 +444,25 @@ export class SqliteClient extends BasicDatabaseClient<SqliteResult> {
   }
 
   async selectTop(table: string, offset: number, limit: number, orderBy: OrderBy[], filters: string | TableFilter[], schema?: string, selects?: string[]): Promise<TableResult> {
-    const query = await this.selectTopSql(table, offset, limit, orderBy, filters, schema, selects);
-    const result = await this.driverExecuteSingle(query);
+    const { query, countQuery, totalCountQuery, params, hasFilters } = buildSelectTopQuery(table, offset, limit, orderBy, filters, undefined, undefined, selects);
+    
+    // Execute data query and appropriate count query based on filter state
+    const [result, countResult] = await Promise.all([
+      this.driverExecuteSingle(this.knex.raw(query, params).toQuery()),
+      this.driverExecuteSingle(this.knex.raw(hasFilters ? countQuery : totalCountQuery, hasFilters ? params : []).toQuery())
+    ]);
+    
     const fields = this.parseQueryResultColumns(result);
     const rows = await this.serializeQueryResult(result, fields);
-    return { result: rows, fields };
+    const totalRows = Array.isArray(countResult.rows) && countResult.rows.length > 0 
+      ? (countResult.rows[0] as any)?.total || (countResult.rows[0] as any)?.total_table_rows || 0
+      : 0;
+    
+    return { 
+      result: rows, 
+      fields,
+      totalRecords: totalRows
+    };
   }
 
   async selectTopSql(table: string, offset: number, limit: number, orderBy: OrderBy[], filters: string | TableFilter[], _schema?: string, selects?: string[]): Promise<string> {

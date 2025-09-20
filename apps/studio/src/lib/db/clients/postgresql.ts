@@ -62,6 +62,8 @@ export interface STQOptions {
 interface STQResults {
   query: string,
   countQuery: string,
+  totalCountQuery?: string,
+  hasFilters?: boolean,
   params: (string | string[])[],
 
 }
@@ -986,7 +988,28 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
     const result = await this.driverExecuteSingle(qs.query, { params: qs.params })
     const fields = this.parseQueryResultColumns(result)
     const rows = await this.serializeQueryResult(result, fields)
-    return { result: rows, fields }
+
+    // Debug logging to understand the issue
+    console.log('DEBUG: selectTop called with filters:', filters);
+    console.log('DEBUG: hasFilters:', qs.hasFilters);
+    console.log('DEBUG: countQuery:', qs.countQuery);
+    console.log('DEBUG: totalCountQuery:', qs.totalCountQuery);
+    console.log('DEBUG: params:', qs.params);
+
+    // Use the appropriate count query for pagination:
+    // - When filters are applied, use totalCountQuery for pagination (total pages)
+    // - When no filters, both queries are the same, so use countQuery
+    const paginationCountQuery = qs.hasFilters && qs.totalCountQuery ? qs.totalCountQuery : qs.countQuery;
+    const paginationParams = qs.hasFilters && qs.totalCountQuery ? [] : qs.params;
+    
+    const countResult = await this.driverExecuteSingle(paginationCountQuery, { params: paginationParams });
+    const totalRows = countResult.rows[0]?.total || 0;
+
+    console.log('DEBUG: paginationCountQuery:', paginationCountQuery);
+    console.log('DEBUG: countResult:', countResult.rows[0]);
+    console.log('DEBUG: totalRows:', totalRows);
+
+    return { result: rows, fields, totalRecords: totalRows }
   }
 
   async selectTopSql(table: string, offset: number, limit: number, orderBy: OrderBy[], filters: string | TableFilter[], schema: string = this._defaultSchema, selects?: string[]): Promise<string> {
@@ -1060,9 +1083,11 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
 
     if (typeOfElement === DatabaseElement.TABLE) {
       sql = `ALTER TABLE ${elementName} RENAME TO ${newElementName};`
-    } else if (typeOfElement === DatabaseElement.VIEW) {
+    } 
+    else if (typeOfElement === DatabaseElement.VIEW) {
       sql = `ALTER VIEW ${elementName} RENAME TO ${newElementName};`
-    } else if (typeOfElement === DatabaseElement.SCHEMA) {
+    } 
+    else if (typeOfElement === DatabaseElement.SCHEMA) {
       sql = `ALTER SCHEMA ${elementName} RENAME TO ${newElementName};`
     }
 
@@ -1266,6 +1291,12 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
     let filterString = ""
     let params: (string | string[])[] = []
 
+    // Determine if we have filters
+    const hasFilters = !!(
+      (_.isString(filters) && filters.trim()) ||
+      (_.isArray(filters) && filters.length > 0)
+    );
+
     if (orderBy && orderBy.length > 0) {
       orderByString = "ORDER BY " + (orderBy.map((item) => {
         if (_.isObject(item)) {
@@ -1349,9 +1380,14 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
       ${filterString}
     `
 
-    // if we're not filtering data we want the optimized approximation of row count
-    // rather than a legit row count.
+    // Build filtered count query (with filters applied)
     const countQuery = this.countQuery(options, baseSQL);
+
+    // Build total count query (without filters for total table rows)
+    const baseSQLWithoutFilters = `
+      FROM ${wrapIdentifier(options.schema)}.${wrapIdentifier(options.table)}
+    `
+    const totalCountQuery = this.countQuery({ ...options, filters: undefined }, baseSQLWithoutFilters);
 
     const query = `
       ${selectSQL} ${baseSQL}
@@ -1360,7 +1396,7 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
       ${_.isNumber(options.offset) ? `OFFSET ${options.offset}` : ''}
       `
     return {
-      query, countQuery, params
+      query, countQuery, totalCountQuery, hasFilters, params
     }
   }
   // ************************************************************************************
@@ -1379,21 +1415,10 @@ export class PostgresClient extends BasicDatabaseClient<QueryResult> {
   }
 
   protected countQuery(options: STQOptions, baseSQL: string): string {
-    // This comes from this PR, it provides approximate counts for PSQL
-    // https://github.com/beekeeper-studio/beekeeper-studio/issues/311#issuecomment-788325650
-    // however not using the complex query, just the simple one from the psql docs
-    // https://wiki.postgresql.org/wiki/Count_estimate
-    // however it doesn't work in redshift or cockroach.
-    const tuplesQuery = `
-      SELECT
-        reltuples as total
-      FROM
-        pg_class
-      where
-        oid = '${wrapIdentifier(options.schema)}.${wrapIdentifier(options.table)}'::regclass
-    `;
-
-    return !options.filters && !options.forceSlow ? tuplesQuery : `SELECT count(*) as total ${baseSQL}`;
+    // Always use count(*) for accurate pagination
+    // The previous implementation used approximate reltuples which caused pagination issues
+    // This ensures consistent and accurate counts for both filtered and unfiltered queries
+    return `SELECT count(*) as total ${baseSQL}`;
   }
 
   protected tableName(table: string, schema: string = this._defaultSchema): string {

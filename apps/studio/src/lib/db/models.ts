@@ -157,6 +157,7 @@ export interface IDbInsert {
 export interface TableResult {
   result: any[];
   fields: BksField[];
+  totalRecords?: number;
 }
 
 export interface BksField {
@@ -171,7 +172,6 @@ export interface TableChanges {
   updates: TableUpdate[];
   deletes: TableDelete[];
 }
-
 
 // AlterTableSpec is in @shared
 

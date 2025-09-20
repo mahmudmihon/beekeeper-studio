@@ -6,9 +6,9 @@
     <form
       @submit.prevent="submit"
       @scroll="
-        ($event.target as HTMLElement).classList.toggle(
+        $event.target.classList.toggle(
           'filter-outside-viewport',
-          ($event.target as HTMLElement).scrollTop > 31
+          $event.target.scrollTop > 31
         )
       "
       ref="filterGroupWrapper"

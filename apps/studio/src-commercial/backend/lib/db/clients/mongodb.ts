@@ -312,7 +312,7 @@ export class MongoDBClient extends BasicDatabaseClient<QueryResult> {
       ...all,
       [ord.field]: ord.dir.toLowerCase() === 'asc' ? 1 : -1 
     }), {} as any) : null;
-    const convertedFilters = !_.isString() && filters.length > 0 ? this.convertFilters(filters as TableFilter[]) : {};
+    const convertedFilters = !_.isString(filters) && filters.length > 0 ? this.convertFilters(filters as TableFilter[]) : {};
     let convertedSelects = null;
     if (selects && selects?.length > 0 && !selects.includes('*')) {
       let init = {} as any;
@@ -366,12 +366,56 @@ export class MongoDBClient extends BasicDatabaseClient<QueryResult> {
   }
 
   async selectTop(table: string, offset: number, limit: number, orderBy: OrderBy[], filters: string | TableFilter[], _schema?: string, selects?: string[]): Promise<TableResult> {
-    const result = await this.buildSelectTopCursor(table, offset, limit, orderBy, filters, selects).toArray();
+    // Determine if there are filters
+    const hasFilters = (_.isString(filters) && filters.trim().length > 0) || 
+                      (Array.isArray(filters) && filters.length > 0)
+    
+    // Execute data query and count query in parallel
+    const [result, totalRows] = await Promise.all([
+      this.buildSelectTopCursor(table, offset, limit, orderBy, filters, selects).toArray(),
+      hasFilters 
+        ? this.buildCountCursor(table, filters).toArray().then(countResult => countResult[0]?.count || 0) // Use filtered count when there are filters
+        : this.getTableLength(table) // Use total count when no filters
+    ])
 
     const fields = this.parseQueryResultColumns(result[0] || {});
     const rows = await this.serializeQueryResult({ rows: result, columns: [], arrayMode: false }, fields)
 
-    return { result: rows, fields: [] }
+    return { 
+      result: rows, 
+      fields: fields, 
+      totalRecords: totalRows
+    }
+  }
+
+  private buildCountCursor(table: string, filters: string | TableFilter[]): AggregationCursor {
+    const collection = this.conn.db(this.db).collection(table);
+    
+    let convertedFilters = {};
+    
+    if (_.isString(filters) && filters.trim().length > 0) {
+      // For string filters, we need to parse them as MongoDB query
+      try {
+        convertedFilters = JSON.parse(filters);
+      } catch (error) {
+        // If it's not valid JSON, treat it as a text search across all fields
+        convertedFilters = { $text: { $search: filters } };
+      }
+    } else if (Array.isArray(filters) && filters.length > 0) {
+      convertedFilters = this.convertFilters(filters as TableFilter[]);
+    }
+
+    const pipeline: any[] = [];
+    
+    // Add match stage if there are filters
+    if (Object.keys(convertedFilters).length > 0) {
+      pipeline.push({ "$match": convertedFilters });
+    }
+    
+    // Add count stage
+    pipeline.push({ "$count": "count" });
+
+    return collection.aggregate(pipeline);
   }
 
   parseQueryResultColumns(row: any): BksField[] {

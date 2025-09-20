@@ -156,12 +156,16 @@ export function buildSelectTopQuery(table, offset, limit, orderBy, filters, coun
   }
   let filterString = ""
   let filterParams = []
+  let hasFilters = false
+  
   if (_.isString(filters)) {
     filterString = `WHERE ${filters}`
+    hasFilters = !!filters && filters.trim().length > 0
   } else {
     const filterBlob = buildFilterString(filters, columns)
     filterString = filterBlob.filterString
     filterParams = filterBlob.filterParams
+    hasFilters = !!(filters && filters.length > 0)
   }
 
   const selectSQL = `SELECT ${selects.map((s) => wrapIdentifier(s)).join(", ")}`
@@ -169,16 +173,29 @@ export function buildSelectTopQuery(table, offset, limit, orderBy, filters, coun
     FROM \`${table}\`
     ${filterString}
   `
-  const countSQL = `
+  
+  // Build count queries - filtered count and total count
+  const filteredCountSQL = `
     select count(*) as ${countTitle} ${baseSQL}
   `
+  
+  const totalCountSQL = `
+    select count(*) as total_table_rows FROM \`${table}\`
+  `
+  
   const sql = `
     ${selectSQL} ${baseSQL}
     ${orderByString}
     ${_.isNumber(limit) ? `LIMIT ${limit}` : ''}
     ${_.isNumber(offset) ? `OFFSET ${offset}` : ""}
     `
-  return {query: sql, countQuery: countSQL, params: filterParams}
+  return {
+    query: sql, 
+    countQuery: filteredCountSQL, 
+    totalCountQuery: totalCountSQL,
+    params: filterParams,
+    hasFilters
+  }
 }
 
 export async function executeSelectTop(queries, conn, executor) {

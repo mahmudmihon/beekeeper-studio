@@ -180,15 +180,30 @@ export class TrinoClient extends BasicDatabaseClient<TrinoResult> {
       schema
     )
 
-    const { query } = queries
-    const result = await this.driverExecuteSingle(query)
+    // Determine if there are filters
+    const hasFilters = (_.isString(filters) && filters.trim().length > 0) || 
+                      (Array.isArray(filters) && filters.length > 0)
+
+    const { query, countQuery } = queries
+    
+    // Execute data query and count query in parallel
+    const [result, countResult] = await Promise.all([
+      this.driverExecuteSingle(query),
+      hasFilters 
+        ? this.driverExecuteSingle(countQuery) // Use filtered count when there are filters
+        : this.driverExecuteSingle(`SELECT COUNT(*) AS total FROM ${TrinoData.wrapIdentifier(schema)}.${TrinoData.wrapIdentifier(table)}`) // Use total count when no filters
+    ])
+
+    const totalRows = Number((countResult.rows as any[])?.[0]?.total) || 0
+
     const fields = result.columns ? result.columns.map(c => ({
       name: c.name,
       bksType: 'UNKNOWN' as BksFieldType
     })) : []
     return {
       result: result.rows || [],
-      fields
+      fields,
+      totalRecords: totalRows
     }
   }
 

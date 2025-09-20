@@ -238,7 +238,30 @@ export class SQLServerClient extends BasicDatabaseClient<SQLServerResult> {
     this.logger().debug(result)
     const fields = this.parseQueryResultColumns(result)
     const rows = await this.serializeQueryResult(result, fields)
-    return { result: rows, fields }
+    
+    // Determine if we have filters
+    const hasFilters = (_.isString(filters) && filters.trim().length > 0) || 
+                      (_.isArray(filters) && filters.length > 0)
+
+    let totalRows: number
+    if (hasFilters) {
+      // Extract totalRows from the TotalRecords column (filtered count)
+      totalRows = rows.length > 0 && 'TotalRecords' in rows[0] ? rows[0].TotalRecords : 0
+    } else {
+      // Execute separate count query for total table count
+      const countQuery = this.genCountQuery(table, [], schema)
+      const countResult = await this.driverExecuteSingle(countQuery)
+      totalRows = countResult.data.recordset[0].total
+    }
+    
+    // Remove TotalRecords from each row
+    rows.forEach(row => delete row.TotalRecords)
+    
+    return {
+      result: rows,
+      fields,
+      totalRecords: totalRows
+    }
   }
 
   async selectTopSql(
@@ -1233,9 +1256,11 @@ export class SQLServerClient extends BasicDatabaseClient<SQLServerResult> {
     const offsetString = (_.isNumber(offset) && _.isNumber(limit)) ?
       `OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY` : ''
 
+    // Add TotalRecords count using a window function
+    const countSQL = `SELECT COUNT(*) OVER() AS TotalRecords, ${selects.map((s) => this.wrapIdentifier(s)).join(", ")}`
 
     const query = `
-      ${selectSQL} ${baseSQL}
+      ${countSQL} ${baseSQL}
       ${orderByString}
       ${offsetString}
       `

@@ -343,11 +343,29 @@ export class OracleClient extends BasicDatabaseClient<DriverResult> {
 
   async selectTop(table: string, offset: number, limit: number, orderBy: OrderBy[], filters: TableFilter[] | string, schema: string = null, selects: string[] = ['*']): Promise<TableResult> {
     schema = schema ? schema : await this.defaultSchema();
-    const query = this.genSelect(table, offset, limit, orderBy, filters, schema, false, selects)
-    const result = await this.driverExecuteSingle(query)
+    
+    // Determine if there are filters
+    const hasFilters = (_.isString(filters) && filters.trim().length > 0) || 
+                      (Array.isArray(filters) && filters.length > 0)
+    
+    // Execute data query and appropriate count query based on filter state
+    const [result, countResult] = await Promise.all([
+      this.driverExecuteSingle(this.genSelect(table, offset, limit, orderBy, filters, schema, false, selects)),
+      this.driverExecuteSingle(hasFilters 
+        ? this.genSelect(table, null, null, [], filters, schema, true) // Use filtered count when there are filters
+        : this.genSelect(table, null, null, [], [], schema, true) // Use total count when no filters
+      )
+    ])
+    
     const fields = this.parseQueryResultColumns(result)
     const rows = await this.serializeQueryResult(result, fields)
-    return { result: await this.convertRowsToObjects(rows, result.result.metaData), fields }
+    const totalRows = (countResult.rows?.[0] as any)?.TOTAL || 0
+    
+    return { 
+      result: await this.convertRowsToObjects(rows, result.result.metaData), 
+      fields,
+      totalRecords: totalRows
+    }
   }
   async selectTopStream(table, orderBy, filters, chunkSize, schema): Promise<StreamResults> {
     const q = this.genSelect(table, null, null, orderBy, filters, schema)
