@@ -1,6 +1,5 @@
 import { Entity } from "../types";
 import { PropType } from "vue";
-import { FormatOptions } from "sql-formatter";
 import { Options } from "sql-query-identifier";
 import props from "../text-editor/props";
 
@@ -18,7 +17,7 @@ export default {
   },
   columnsGetter: Function,
   formatterDialect: {
-    type: String as PropType<FormatOptions["language"]>,
+    type: String,
     default: "sql",
   },
   identifierDialect: {

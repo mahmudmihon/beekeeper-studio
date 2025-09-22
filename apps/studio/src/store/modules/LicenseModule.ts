@@ -90,20 +90,20 @@ export const LicenseModule: Module<State, RootState>  = {
         log.warn('Already initialized')
         return
       }
-      await context.dispatch('sync')
+      // Disable sync to prevent API calls
+      // await context.dispatch('sync')
       const installationId = await Vue.prototype.$util.send('license/getInstallationId');
       context.commit('installationId', installationId)
 
-
-      if (!window.platformInfo.isDevelopment) {
-        // refreshing in dev mode resets the dev credentials added by the menu
-        setInterval(() => context.dispatch('sync'), globals.licenseCheckInterval)
-      } else {
-        log.warn("Credential refreshing is disabled (dev mode detected)")
-      }
+      // Disable all credential refreshing to prevent API calls
+      log.warn("License API calls are disabled to prevent production issues")
       context.commit('setInitialized', true)
     },
     async add(context, { email, key, trial }) {
+      log.warn("License API calls are disabled to prevent production issues")
+      // Disable all license API calls
+      return
+      
       if (trial) {
         await Vue.prototype.$util.send('license/createTrialLicense')
         await Vue.prototype.$noty.info("Your 14 day free trial has started, enjoy!")
@@ -134,6 +134,10 @@ export const LicenseModule: Module<State, RootState>  = {
       await context.dispatch('sync')
     },
     async update(_context, license: TransportLicenseKey) {
+      log.warn("License API calls are disabled to prevent production issues")
+      // Disable all license API calls
+      return
+      
       // This is to allow for dev switching
       const isDevUpdate = window.platformInfo.isDevelopment && license.email == "fake_email";
       try {
@@ -165,6 +169,10 @@ export const LicenseModule: Module<State, RootState>  = {
       }
     },
     async updateAll(context) {
+      log.warn("License API calls are disabled to prevent production issues")
+      // Disable all license API calls
+      return
+      
       for (let index = 0; index < context.getters.realLicenses.length; index++) {
         const license = context.getters.realLicenses[index];
         await context.dispatch('update', license);
@@ -176,6 +184,10 @@ export const LicenseModule: Module<State, RootState>  = {
       await context.dispatch('sync')
     },
     async sync(context) {
+      log.warn("License API calls are disabled to prevent production issues")
+      // Disable all license API calls
+      return
+      
       const status = await Vue.prototype.$util.send('license/getStatus')
       const licenses = await Vue.prototype.$util.send('license/get')
       context.commit('set', licenses)
