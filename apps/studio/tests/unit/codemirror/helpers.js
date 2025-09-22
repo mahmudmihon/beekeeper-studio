@@ -1,6 +1,4 @@
-import CodeMirror from "codemirror";
-import "@/vendor/sql-hint/index";
-import "../../../src/lib/editor/CodeMirrorDefinitions";
+// CodeMirror 5 imports removed - now using CodeMirror 6
 import {
   registerAutoquote,
   autoquoteHandler,

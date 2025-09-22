@@ -3,13 +3,11 @@
     v-bind="$attrs"
     :value="value"
     @input="$emit('input', $event)"
-    :hint="hint"
-    :mode="dialectData.textEditorMode"
+    mode="sql"
     :extra-keybindings="keybindings"
-    :hint-options="hintOptions"
     :columns-getter="columnsGetter"
     :context-menu-options="handleContextMenuOptions"
-    :plugins="plugins"
+    :extensions="extensions"
     :auto-focus="true"
     @update:focus="$emit('update:focus', $event)"
     @update:selection="$emit('update:selection', $event)"
@@ -23,10 +21,14 @@
 import Vue from "vue";
 import TextEditor from "./TextEditor.vue";
 import { mapState, mapGetters } from "vuex";
-import { plugins } from "@/lib/editor/utils";
 import { format } from "sql-formatter";
 import { FormatterDialect, dialectFor } from "@shared/lib/dialects/models";
-import CodeMirror from "codemirror";
+import {
+  createAutoquoteExtension,
+  createAutocompleteExtension,
+  createRemoveQueryQuotesExtension,
+  createQueryMagicExtension
+} from "@/lib/editor/CodeMirrorPlugins";
 
 export default Vue.extend({
   components: { TextEditor },
@@ -34,42 +36,6 @@ export default Vue.extend({
   computed: {
     ...mapGetters(['defaultSchema', 'dialectData', 'isUltimate']),
     ...mapState(["tables"]),
-    hint() {
-      // @ts-expect-error not fully typed
-      return CodeMirror.hint.sql;
-    },
-    hintOptions() {
-      // We do this so we can order the autocomplete options
-      const firstTables = {};
-      const secondTables = {};
-      const thirdTables = {};
-
-      this.tables.forEach((table) => {
-        // don't add table names that can get in conflict with database schema
-        if (/\./.test(table.name)) return;
-
-        // Previously we had to provide a table: column[] mapping.
-        // we don't need to provide the columns anymore because we fetch them dynamically.
-        if (!table.schema) {
-          firstTables[table.name] = [];
-          return;
-        }
-
-        if (table.schema === this.defaultSchema) {
-          firstTables[table.name] = [];
-          secondTables[`${table.schema}.${table.name}`] = [];
-        } else {
-          thirdTables[`${table.schema}.${table.name}`] = [];
-        }
-      });
-
-      const sorted = Object.assign(
-        firstTables,
-        Object.assign(secondTables, thirdTables)
-      );
-
-      return { tables: sorted };
-    },
     keybindings() {
       return {
         "Shift-Ctrl-F": this.formatSql,
@@ -77,15 +43,15 @@ export default Vue.extend({
         ...this.extraKeybindings,
       };
     },
-    plugins() {
-      const editorPlugins = [
-        plugins.autoquote,
-        plugins.autoComplete,
-        plugins.autoRemoveQueryQuotes(this.queryDialect),
-        plugins.queryMagic(() => this.defaultSchema, () => this.tables)
+    extensions() {
+      const editorExtensions = [
+        createAutoquoteExtension(),
+        createAutocompleteExtension(),
+        createRemoveQueryQuotesExtension(this.queryDialect),
+        createQueryMagicExtension(() => this.defaultSchema, () => this.tables)
       ];
 
-      return editorPlugins;
+      return editorExtensions;
     },
     queryDialect() {
       return this.dialectData.queryDialectOverride ?? this.connectionType

@@ -1824,7 +1824,7 @@
     "@codemirror/view" "^6.17.0"
     "@lezer/common" "^1.0.0"
 
-"@codemirror/commands@^6.8.1":
+"@codemirror/commands@^6.0.0", "@codemirror/commands@^6.8.1":
   version "6.8.1"
   resolved "https://registry.npmjs.org/@codemirror/commands/-/commands-6.8.1.tgz#639f5559d2f33f2582a2429c58cb0c1b925c7a30"
   integrity sha512-KlGVYufHMQzxbdQONiLyGQDUW0itrLZwq3CcY7xpv9ZLRHqzkBSoteocBHtMCoY7/Ci4xhzSrToIeLg7FxHuaw==
@@ -1914,7 +1914,7 @@
     "@codemirror/view" "^6.35.0"
     crelt "^1.0.5"
 
-"@codemirror/search@^6.5.10":
+"@codemirror/search@^6.0.0", "@codemirror/search@^6.5.10":
   version "6.5.11"
   resolved "https://registry.npmjs.org/@codemirror/search/-/search-6.5.11.tgz#a324ffee36e032b7f67aa31c4fb9f3e6f9f3ed63"
   integrity sha512-KmWepDE6jUdL6n8cAAqIpRmLPBZ5ZKnicE8oGU/s3QrAVID+0VhLFrzUucVKHG5035/BSykhExDL/Xm7dHthiA==
@@ -1931,9 +1931,9 @@
     "@marijn/find-cluster-break" "^1.0.0"
 
 "@codemirror/view@^6.0.0", "@codemirror/view@^6.17.0", "@codemirror/view@^6.23.0", "@codemirror/view@^6.27.0", "@codemirror/view@^6.35.0", "@codemirror/view@^6.36.2":
-  version "6.38.2"
-  resolved "https://registry.npmjs.org/@codemirror/view/-/view-6.38.2.tgz#c98aa9f6450a1c95c9744ae8b517600a15a1942f"
-  integrity sha512-bTWAJxL6EOFLPzTx+O5P5xAO3gTqpatQ2b/ARQ8itfU/v2LlpS3pH2fkL0A3E/Fx8Y2St2KES7ZEV0sHTsSW/A==
+  version "6.38.3"
+  resolved "https://registry.npmjs.org/@codemirror/view/-/view-6.38.3.tgz#6b31d5d5c67a51615dd345184159630b763804b1"
+  integrity sha512-x2t87+oqwB1mduiQZ6huIghjMt4uZKFEdj66IcXw7+a5iBEvv9lh7EWDRHI7crnD4BMGpnyq/RzmCGbiEZLcvQ==
   dependencies:
     "@codemirror/state" "^6.5.0"
     crelt "^1.0.6"
@@ -2900,6 +2900,16 @@
   version "1.16.0"
   resolved "https://registry.npmjs.org/@marimo-team/codemirror-languageserver/-/codemirror-languageserver-1.16.0.tgz#c8f18010123df21e29a93515902c5a2a2fad0704"
   integrity sha512-DIKGvEE/M/eTr+p/F6GjANBwAAv4bByptyNAlUYQHt16bV5CncktwAv3wdYe1LVADxR6ReugCRKCK3RYcaMmWw==
+  dependencies:
+    "@codemirror/autocomplete" "^6.18.4"
+    "@codemirror/lint" "^6.8.4"
+    "@open-rpc/client-js" "^1.8.1"
+    marked "^15.0.6"
+    vscode-languageserver-protocol "^3.17.5"
+
+"@marimo-team/codemirror-languageserver@azmy60/codemirror-languageserver#b815a92e5f9120a845385ddfb89e85b0fa60fbde":
+  version "1.15.13-bks.1"
+  resolved "https://codeload.github.com/azmy60/codemirror-languageserver/tar.gz/b815a92e5f9120a845385ddfb89e85b0fa60fbde"
   dependencies:
     "@codemirror/autocomplete" "^6.18.4"
     "@codemirror/lint" "^6.8.4"
@@ -4184,13 +4194,6 @@
     "@types/node" "*"
     "@types/responselike" "^1.0.0"
 
-"@types/codemirror@^0.0.97":
-  version "0.0.97"
-  resolved "https://registry.npmjs.org/@types/codemirror/-/codemirror-0.0.97.tgz#6f2d8266b7f1b34aacfe8c77221fafe324c3d081"
-  integrity sha512-n5d7o9nWhC49DjfhsxANP7naWSeTzrjXASkUDQh7626sM4zK9XP2EVcHp1IcCf/IPV6c7ORzDUDF3Bkt231VKg==
-  dependencies:
-    "@types/tern" "*"
-
 "@types/dateformat@^3.0.1":
   version "3.0.1"
   resolved "https://registry.npmjs.org/@types/dateformat/-/dateformat-3.0.1.tgz#98d747a2e5e9a56070c6bf14e27bff56204e34cc"
@@ -4225,7 +4228,7 @@
   resolved "https://registry.npmjs.org/@types/electron-devtools-installer/-/electron-devtools-installer-2.2.5.tgz#33572d0edee2510a6c293d0d5c858ee09f07cd19"
   integrity sha512-DhH8z0dadKuDolvH4TiW40Vp7H3VyZbOoZv98hhBaUfnxmvvcXTjkZjzw/54xvAmuG4KFzExOGAiVLg3jM2ojQ==
 
-"@types/estree@*", "@types/estree@1.0.8", "@types/estree@^1.0.0":
+"@types/estree@1.0.8", "@types/estree@^1.0.0":
   version "1.0.8"
   resolved "https://registry.npmjs.org/@types/estree/-/estree-1.0.8.tgz#958b91c991b1867ced318bedea0e215ee050726e"
   integrity sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==
@@ -4491,13 +4494,6 @@
   version "6.2.11"
   resolved "https://registry.npmjs.org/@types/tabulator-tables/-/tabulator-tables-6.2.11.tgz#c3d00b20b053657e193fcbad9f452f33238a781d"
   integrity sha512-vDyUwAsrMYH17YvkTuEPUx2Rp98JK0p3B74EsUlvYr08bP4l0NgXL+0tcDIon8Rd2GJeOFC0gW+/3MZ5a9nvSg==
-
-"@types/tern@*":
-  version "0.23.9"
-  resolved "https://registry.npmjs.org/@types/tern/-/tern-0.23.9.tgz#6f6093a4a9af3e6bb8dde528e024924d196b367c"
-  integrity sha512-ypzHFE/wBzh+BlH6rrBgS5I/Z7RD21pGhZ2rltb/+ZrVM1awdZwjx7hE5XfuYgHWk9uvV5HLZN3SloevCAp3Bw==
-  dependencies:
-    "@types/estree" "*"
 
 "@types/tmp@^0.2.6":
   version "0.2.6"
@@ -5559,7 +5555,7 @@ balanced-match@^1.0.0:
   resolved "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz#e83e3a7e3f300b34cb9d87f615fa0cbf357690ee"
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
 
-bare-events@^2.2.0, bare-events@^2.5.4:
+bare-events@^2.5.4, bare-events@^2.7.0:
   version "2.7.0"
   resolved "https://registry.npmjs.org/bare-events/-/bare-events-2.7.0.tgz#46596dae9c819c5891eb2dcc8186326ed5a6da54"
   integrity sha512-b3N5eTW1g7vXkw+0CXh/HazGTcO5KYuu/RCNaJbDMPI6LHDi+7qe8EmxKUVe1sUbY2KZOVZFyj62x0OEz9qyAA==
@@ -6239,10 +6235,18 @@ code-point-at@^1.0.0:
   resolved "https://registry.npmjs.org/code-point-at/-/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
   integrity sha512-RpAVKQA5T63xEj6/giIbUEtZwJ4UFIc3ZtvEkiaUERylqe8xb5IvqcgOurZLahv93CLKfxcw5YI+DZcUBRyLXA==
 
-codemirror@^5.63.1:
-  version "5.65.20"
-  resolved "https://registry.npmjs.org/codemirror/-/codemirror-5.65.20.tgz#8aa77c2dbfeb2df9b0828bf8e7d64fdd566eeff0"
-  integrity sha512-i5dLDDxwkFCbhjvL2pNjShsojoL3XHyDwsGv1jqETUoW+lzpBKKqNTUWgQwVAOa0tUm4BwekT455ujafi8payA==
+codemirror@^6.0.1:
+  version "6.0.2"
+  resolved "https://registry.npmjs.org/codemirror/-/codemirror-6.0.2.tgz#4d3fea1ad60b6753f97ca835f2f48c6936a8946e"
+  integrity sha512-VhydHotNW5w1UGK0Qj96BwSk/Zqbp9WbnyK2W/eVMv4QyF41INRGpjUhFJY7/uDNuudSc33a/PKr4iDqRduvHw==
+  dependencies:
+    "@codemirror/autocomplete" "^6.0.0"
+    "@codemirror/commands" "^6.0.0"
+    "@codemirror/language" "^6.0.0"
+    "@codemirror/lint" "^6.0.0"
+    "@codemirror/search" "^6.0.0"
+    "@codemirror/state" "^6.0.0"
+    "@codemirror/view" "^6.0.0"
 
 collect-v8-coverage@^1.0.0:
   version "1.0.2"
@@ -7543,6 +7547,13 @@ event-target-shim@^5.0.0:
   version "5.0.1"
   resolved "https://registry.npmjs.org/event-target-shim/-/event-target-shim-5.0.1.tgz#5d4d3ebdf9583d63a5333ce2deb7480ab2b05789"
   integrity sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==
+
+events-universal@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/events-universal/-/events-universal-1.0.0.tgz#29f50d4e4bed8c0ca3780a620a9fd7ec26daab6e"
+  integrity sha512-1KVXP1Oq8SiC0HsRraCryA4XGrZ2uJgIt/h4X+mB/8pzMKE7L8yBDN2lBlqJZeUwLAt7kf80m/5GX3HvoCrSGA==
+  dependencies:
+    bare-events "^2.7.0"
 
 events@^3.3.0:
   version "3.3.0"
@@ -13089,14 +13100,13 @@ stream-shift@^1.0.2:
   integrity sha512-76ORR0DO1o1hlKwTbi/DM3EXWGf3ZJYO8cXX5RJwnul2DEg2oyoZyjLNoQM8WsvZiFKCRfC1O0J7iCvie3RZmQ==
 
 streamx@^2.15.0, streamx@^2.21.0:
-  version "2.22.1"
-  resolved "https://registry.npmjs.org/streamx/-/streamx-2.22.1.tgz#c97cbb0ce18da4f4db5a971dc9ab68ff5dc7f5a5"
-  integrity sha512-znKXEBxfatz2GBNK02kRnCXjV+AA4kjZIUxeWSr3UGirZMJfTE9uiwKHobnbgxWyL/JWro8tTq+vOqAK1/qbSA==
+  version "2.23.0"
+  resolved "https://registry.npmjs.org/streamx/-/streamx-2.23.0.tgz#7d0f3d00d4a6c5de5728aecd6422b4008d66fd0b"
+  integrity sha512-kn+e44esVfn2Fa/O0CPFcex27fjIL6MkVae0Mm6q+E6f0hWv578YCERbv+4m02cjxvDsPKLnmxral/rR6lBMAg==
   dependencies:
+    events-universal "^1.0.0"
     fast-fifo "^1.3.2"
     text-decoder "^1.1.0"
-  optionalDependencies:
-    bare-events "^2.2.0"
 
 strict-event-emitter-types@^2.0.0:
   version "2.0.0"

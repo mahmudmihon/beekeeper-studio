@@ -1,6 +1,4 @@
-import * as CodeMirrorPlugins from "@/lib/editor/CodeMirrorPlugins";
-import { TableOrView } from "../db/models";
-import CodeMirror from "codemirror";
+import { EditorSelection } from "@codemirror/state";
 
 export interface EditorRange {
   id?: string;
@@ -20,29 +18,16 @@ export interface LineGutter {
   type: "changed";
 }
 
-/** Checks if `target` is within `container` */
+/** Checks if `target` is within `container` - updated for CodeMirror 6 */
 export function isPositionWithin(
-  target: { from: CodeMirror.Position; to: CodeMirror.Position },
-  container: { from: CodeMirror.Position; to: CodeMirror.Position }
+  target: { from: { line: number; ch: number }; to: { line: number; ch: number } },
+  container: { from: { line: number; ch: number }; to: { line: number; ch: number } }
 ) {
-  return (
-    CodeMirror.cmpPos(target.from, container.from) >= 0 &&
-    CodeMirror.cmpPos(target.to, container.to) <= 0
-  );
+  // Convert to simple position comparison since CM6 doesn't have cmpPos
+  const targetFromPos = target.from.line * 1000000 + target.from.ch;
+  const targetToPos = target.to.line * 1000000 + target.to.ch;
+  const containerFromPos = container.from.line * 1000000 + container.from.ch;
+  const containerToPos = container.to.line * 1000000 + container.to.ch;
+  
+  return targetFromPos >= containerFromPos && targetToPos <= containerToPos;
 }
-
-export const plugins = {
-  autoquote: CodeMirrorPlugins.registerAutoquote,
-  autoComplete: CodeMirrorPlugins.registerAutoComplete,
-  autoRemoveQueryQuotes: (dialect: string) =>
-    CodeMirrorPlugins.registerAutoRemoveQueryQuotes.bind(null, dialect),
-  queryMagic: (
-    defaultSchemaGetter: () => string,
-    tablesGetter: () => TableOrView[]
-  ) =>
-    CodeMirrorPlugins.registerQueryMagic.bind(
-      null,
-      defaultSchemaGetter,
-      tablesGetter
-    ),
-};
